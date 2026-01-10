@@ -1,7 +1,7 @@
 {
   "name": "milkbook",
   "version": "1.0.0",
-  "description": "MilkBook - Automatic Milk Collection & Dairy Accounting Software for Indian milk businesses",
+  "description": "MilkBook - Automatic Milk Collection & Dairy Accounting Software for Indian milk businesses - Designed by signimus",
   "main": "index.tsx",
   "scripts": {
     "dev": "vite",
@@ -27,6 +27,6 @@
     "indian",
     "business"
   ],
-  "author": "",
+  "author": "signimus",
   "license": "ISC"
 }

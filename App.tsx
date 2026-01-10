@@ -234,9 +234,9 @@ function App() {
 
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
+
         body { font-family: 'Inter', sans-serif; }
-        
+
         /* ERP Style Scrollbars */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -270,12 +270,17 @@ function App() {
           cursor: pointer;
           white-space: nowrap;
         }
-        
+
         .btn-primary { background: #2563eb; color: white; }
         .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
         .btn-secondary { background: white; border: 1px solid #e2e8f0; color: #475569; }
         .btn-secondary:hover { background: #f8fafc; border-color: #cbd5e1; }
       `}} />
+
+      {/* Footer with designer attribution */}
+      <footer className="print:hidden text-center py-4 text-slate-500 text-sm border-t bg-slate-50">
+        Designed by <span className="font-bold text-slate-700">signimus</span>
+      </footer>
     </div>
   );
 }
