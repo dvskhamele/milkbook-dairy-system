@@ -64,9 +64,6 @@
             }
         }
 
-        .btn-transition { 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #3b82f6;
@@ -78,17 +75,31 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+        const { useState, useEffect } = React;
 
-        /** 
-         * CONSTANTS & HELPERS
-         */
+        // Simple state management
         const STORAGE_KEY = 'dairy_mgmt_state_v1';
-        const BACKUP_KEY = 'milk_backup_v1';
+        const INITIAL_STATE = {
+            auth: { isAuthenticated: false, user: null },
+            currentScreen: 'login',
+            dairyInfo: { name: '', owner: '', mobile: '', address: '', rateType: 'Fat_SNF', language: 'EN' },
+            farmers: [],
+            milkEntries: [],
+            rates: {
+                cow: { base: 40, fatRef: 3.5, snfRef: 8.5 },
+                buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 }
+            },
+            payments: [],
+            sales: [],
+            inventory: [],
+            settings: { backupEnabled: true, lastBackup: null, printerName: 'Default' }
+        };
 
+        // Format currency
         const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val || 0);
         const formatDate = (date) => new Date(date).toLocaleDateString('en-IN');
 
+        // Calculate milk amount
         const calculateMilkAmount = (qty, fat, snf, rateType, rates, type) => {
             const baseRate = type === 'Cow' ? rates.cow.base : rates.buffalo.base;
             const fatRef = type === 'Cow' ? rates.cow.fatRef : rates.buffalo.fatRef;
@@ -109,47 +120,330 @@
             };
         };
 
-        /**
-         * INITIAL STATE
-         */
-        const INITIAL_STATE = {
-            auth: { isAuthenticated: false, user: null },
-            currentScreen: 'login',
-            dairyInfo: { name: '', owner: '', mobile: '', address: '', rateType: 'Fat_SNF', language: 'EN' },
-            farmers: [],
-            milkEntries: [],
-            rates: {
-                cow: { base: 40, fatRef: 3.5, snfRef: 8.5 },
-                buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 }
-            },
-            payments: [],
-            sales: [],
-            inventory: [],
-            settings: { backupEnabled: true, lastBackup: null, printerName: 'Default' }
+        // Icon component
+        const Icon = ({ name, size = 20, className = "" }) => {
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, []);
+
+            return React.createElement('i', { 
+                'data-lucide': name, 
+                style: { width: size, height: size }, 
+                className: className
+            });
         };
 
-        /**
-         * MAIN APPLICATION
-         */
+        // Card component
+        const Card = ({ title, children, extra, noPadding = false }) => (
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6 transition-all hover:shadow-md">
+                {(title || extra) && (
+                    <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50/30">
+                        {title && <h2 className="text-lg font-bold text-slate-800">{title}</h2>}
+                        {extra && <div>{extra}</div>}
+                    </div>
+                )}
+                <div className={noPadding ? '' : 'p-6'}>{children}</div>
+            </div>
+        );
+
+        // Stat Card component
+        const StatCard = ({ label, value, iconName, color }) => {
+            const colors = {
+                blue: 'bg-blue-50 text-blue-600',
+                green: 'bg-green-50 text-green-600',
+                amber: 'bg-amber-50 text-amber-600',
+                rose: 'bg-rose-50 text-rose-600'
+            };
+            return (
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
+                    <div className={`p-4 rounded-xl ${colors[color] || colors.blue}`}>
+                        <Icon name={iconName} size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
+                        <p className="text-2xl font-black text-slate-800">{value}</p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Login Screen Component
+        const LoginScreen = ({ state, setState, notify, navigate }) => {
+            const [formData, setFormData] = useState({ mobile: '', password: '' });
+            
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                if (saved?.auth?.user?.mobile === formData.mobile && saved?.auth?.user?.password === formData.password) {
+                    setState(prev => ({ ...prev, auth: { isAuthenticated: true, user: saved.auth.user }, currentScreen: saved.dairyInfo.name ? 'dashboard' : 'setup' }));
+                    notify('Logged in');
+                } else notify('Invalid credentials', 'error');
+            };
+            
+            return (
+                <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
+                    <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+                        <div className="bg-blue-600 p-10 text-white text-center">
+                            <Icon name="droplet" size={64} className="mx-auto mb-4 text-white" />
+                            <h2 className="text-4xl font-black tracking-tighter">MilkBook</h2>
+                            <p className="opacity-70 text-sm font-bold uppercase tracking-widest">Automatic Milk Collection & Dairy Accounting</p>
+                        </div>
+                        <form onSubmit={handleLogin} className="p-10 space-y-6">
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    className="w-full p-4 bg-slate-50 border rounded-xl font-bold" 
+                                    value={formData.mobile} 
+                                    onChange={e => setFormData({...formData, mobile: e.target.value})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Password</label>
+                                <input 
+                                    type="password" 
+                                    required 
+                                    className="w-full p-4 bg-slate-50 border rounded-xl font-bold" 
+                                    value={formData.password} 
+                                    onChange={e => setFormData({...formData, password: e.target.value})} 
+                                />
+                            </div>
+                            <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">LOGIN SYSTEM</button>
+                            <div className="text-center">
+                                <button type="button" onClick={() => navigate('register')} className="text-blue-600 font-black text-sm hover:underline uppercase tracking-tighter">Register New Dairy Center</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // Register Screen Component
+        const RegisterScreen = ({ setState, notify, navigate }) => {
+            const [form, setForm] = useState({ dairyName: '', ownerName: '', mobile: '', password: '', confirm: '' });
+            
+            const handleRegister = (e) => {
+                e.preventDefault();
+                if (form.password !== form.confirm) return notify("Passwords mismatch", 'error');
+                const user = { name: form.ownerName, mobile: form.mobile, password: form.password };
+                setState(prev => ({ ...prev, auth: { isAuthenticated: true, user }, dairyInfo: { ...prev.dairyInfo, name: form.dairyName, owner: form.ownerName, mobile: form.mobile }, currentScreen: 'setup' }));
+                notify("Registered");
+            };
+            
+            return (
+                <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
+                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-12">
+                        <h2 className="text-3xl font-black text-slate-800 mb-2 tracking-tighter uppercase">Register Center</h2>
+                        <p className="text-slate-500 font-bold mb-8">Setup your digital procurement system.</p>
+                        <form onSubmit={handleRegister} className="grid grid-cols-2 gap-6">
+                            <div className="col-span-2">
+                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Dairy Name</label>
+                                <input 
+                                    required 
+                                    className="w-full p-4 bg-slate-50 border rounded-xl font-bold" 
+                                    value={form.dairyName} 
+                                    onChange={e => setForm({...form, dairyName: e.target.value})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Owner Name</label>
+                                <input 
+                                    required 
+                                    className="w-full p-4 bg-slate-50 border rounded-xl font-bold" 
+                                    value={form.ownerName} 
+                                    onChange={e => setForm({...form, ownerName: e.target.value})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Mobile</label>
+                                <input 
+                                    required 
+                                    className="w-full p-4 bg-slate-50 border rounded-xl font-bold" 
+                                    value={form.mobile} 
+                                    onChange={e => setForm({...form, mobile: e.target.value})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Password</label>
+                                <input 
+                                    type="password" 
+                                    required 
+                                    className="w-full p-4 bg-slate-50 border rounded-xl" 
+                                    value={form.password} 
+                                    onChange={e => setForm({...form, password: e.target.value})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Confirm</label>
+                                <input 
+                                    type="password" 
+                                    required 
+                                    className="w-full p-4 bg-slate-50 border rounded-xl" 
+                                    value={form.confirm} 
+                                    onChange={e => setForm({...form, confirm: e.target.value})} 
+                                />
+                            </div>
+                            <button type="submit" className="col-span-2 py-5 bg-blue-600 text-white rounded-xl font-black text-xl hover:bg-blue-700">INITIALIZE DAIRY SYSTEM</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // Dashboard Screen Component
+        const DashboardScreen = ({ state, navigate }) => {
+            const today = new Date().toISOString().split('T')[0];
+            const todayEntries = state.milkEntries.filter(e => e.date === today);
+            const totalQty = todayEntries.reduce((acc, curr) => acc + Number(curr.qty), 0);
+            const totalAmt = todayEntries.reduce((acc, curr) => acc + Number(curr.amount), 0);
+            const avgFat = todayEntries.length > 0 ? (todayEntries.reduce((acc, curr) => acc + Number(curr.fat), 0) / todayEntries.length).toFixed(1) : 0;
+
+            return (
+                <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <StatCard label="Today's Milk" value={`${totalQty.toFixed(1)} L`} iconName="droplets" color="blue" />
+                        <StatCard label="Today's Value" value={formatCurrency(totalAmt)} iconName="indian-rupee" color="green" />
+                        <StatCard label="Avg. Fat" value={`${avgFat}%`} iconName="check-circle" color="amber" />
+                        <StatCard label="Total Farmers" value={state.farmers.filter(f => f.active).length} iconName="users" color="rose" />
+                    </div>
+                    
+                    <Card title="Recent Collections">
+                        <table className="w-full text-left">
+                            <thead className="border-b text-[10px] font-black text-slate-400 uppercase">
+                                <tr>
+                                    <th className="pb-4">Farmer</th>
+                                    <th className="pb-4">Time</th>
+                                    <th className="pb-4">Qty</th>
+                                    <th className="pb-4">Fat%</th>
+                                    <th className="pb-4 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {todayEntries.slice(0, 5).map(entry => {
+                                    const farmer = state.farmers.find(f => f.id === entry.farmerId);
+                                    return (
+                                        <tr key={entry.id}>
+                                            <td className="py-4 font-black">{farmer?.name || 'Unknown'}</td>
+                                            <td className="py-4 font-bold text-slate-500">{entry.time}</td>
+                                            <td className="py-4 font-black text-slate-700">{entry.qty} L</td>
+                                            <td className="py-4 font-black text-amber-600">{entry.fat}</td>
+                                            <td className="py-4 text-right font-black text-blue-600">{formatCurrency(entry.amount)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </Card>
+                </div>
+            );
+        };
+
+        // Setup Wizard Component
+        const SetupWizard = ({ state, setState, notify, navigate }) => {
+            const [step, setStep] = useState(1);
+            const [dairy, setDairy] = useState(state.dairyInfo);
+
+            const complete = () => {
+                setState(prev => ({ ...prev, dairyInfo: dairy, currentScreen: 'dashboard' }));
+                notify("Setup Complete");
+            };
+
+            return (
+                <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4">
+                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl border overflow-hidden">
+                        <div className="flex bg-slate-100 border-b">
+                            {[1, 2, 3].map(i => 
+                                <div key={i} className={`flex-1 py-4 text-center text-xs font-black uppercase tracking-widest ${
+                                    step === i ? 'bg-white text-blue-600 border-b-4 border-blue-600' : 'text-slate-400'
+                                }`}>Step {i}</div>
+                            )}
+                        </div>
+                        <div className="p-12 space-y-8 text-center">
+                            {step === 1 && (
+                                <div>
+                                    <Icon name="map-pin" size={48} className="mx-auto text-blue-600" />
+                                    <h3 className="text-3xl font-black tracking-tight uppercase">Location Details</h3>
+                                    <textarea 
+                                        className="w-full p-4 border rounded-xl min-h-[120px] font-bold" 
+                                        value={dairy.address} 
+                                        onChange={e => setDairy({...dairy, address: e.target.value})} 
+                                        placeholder="Dairy Address (Village, District...)" 
+                                    ></textarea>
+                                    <button onClick={() => setStep(2)} className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-xl hover:bg-blue-700">Continue Setup</button>
+                                </div>
+                            )}
+                            {step === 2 && (
+                                <div>
+                                    <Icon name="percent" size={48} className="mx-auto text-blue-600" />
+                                    <h3 className="text-3xl font-black tracking-tight uppercase">Rate Calculation</h3>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {[
+                                            { id: 'Fat_SNF', title: 'Fat + SNF Based', desc: 'Standard calculation based on Fat and Solids-Not-Fat' },
+                                            { id: 'Fat', title: 'Fat Only', desc: 'Rate calculated purely on Fat percentage' },
+                                            { id: 'CLR', title: 'CLR Method', desc: 'Used for traditional quality testing' }
+                                        ].map(opt => 
+                                            <label key={opt.id} className={`p-5 border-2 rounded-2xl cursor-pointer flex items-center justify-between transition-all ${
+                                                dairy.rateType === opt.id ? 'border-blue-600 bg-blue-50' : 'border-slate-100 hover:border-slate-200'
+                                            }`}>
+                                                <div>
+                                                    <p className="font-bold text-slate-800">{opt.title}</p>
+                                                    <p className="text-sm text-slate-500 font-medium">{opt.desc}</p>
+                                                </div>
+                                                <input 
+                                                    type="radio" 
+                                                    checked={dairy.rateType === opt.id} 
+                                                    onChange={() => setDairy({ ...dairy, rateType: opt.id })} 
+                                                />
+                                            </label>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <button onClick={() => setStep(1)} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl">Back</button>
+                                        <button onClick={() => setStep(3)} className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-xl">Continue</button>
+                                    </div>
+                                </div>
+                            )}
+                            {step === 3 && (
+                                <div>
+                                    <Icon name="check-circle" size={48} className="mx-auto text-green-600" />
+                                    <h3 className="text-3xl font-black tracking-tight uppercase">Ready to Start</h3>
+                                    <div className="bg-amber-50 p-6 rounded-2xl border border-amber-200 text-left">
+                                        <p className="text-amber-800 font-bold mb-2 flex items-center gap-2">
+                                            <Icon name="alert-circle" size={18} /> Review Details
+                                        </p>
+                                        <ul className="text-sm space-y-1 text-amber-700 font-medium">
+                                            <li>Dairy: {dairy.name}</li>
+                                            <li>Rate: {dairy.rateType}</li>
+                                            <li>Backup: Enabled (Browser Storage)</li>
+                                        </ul>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <button onClick={() => setStep(2)} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl">Back</button>
+                                        <button onClick={complete} className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-xl">Complete Setup</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App Component
         function App() {
-            const [state, setState] = useState(INITIAL_STATE);
+            const [state, setState] = useState(() => {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                return saved ? JSON.parse(saved) : INITIAL_STATE;
+            });
             const [isSidebarOpen, setSidebarOpen] = useState(true);
             const [notif, setNotif] = useState(null);
 
             // Persistence
             useEffect(() => {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    try {
-                        const parsed = JSON.parse(saved);
-                        setState(parsed);
-                    } catch (e) { console.error("Persistence failed", e); }
-                }
-            }, []);
-
-            useEffect(() => {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                if (window.lucide) window.lucide.createIcons();
             }, [state]);
 
             const notify = (msg, type = 'success') => {
@@ -160,169 +454,26 @@
             const navigate = (screen) => setState(prev => ({ ...prev, currentScreen: screen }));
             const logout = () => setState(prev => ({ ...prev, auth: { isAuthenticated: false, user: null }, currentScreen: 'login' }));
 
-            // Simple render function for the main app
+            // Simple render function
             const renderScreen = () => {
-                if (state.currentScreen === 'login') {
-                    return (
-                        <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
-                            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-                                <div className="bg-blue-600 p-10 text-white text-center">
-                                    <i data-lucide="droplet" style={{ width: 64, height: 64 }} className="mx-auto mb-4 text-white"></i>
-                                    <h2 className="text-4xl font-black tracking-tighter">MilkBook</h2>
-                                    <p className="opacity-70 text-sm font-bold uppercase tracking-widest">Automatic Milk Collection & Dairy Accounting</p>
-                                </div>
-                                <form onSubmit={(e) => {
-                                    e.preventDefault();
-                                    const formData = new FormData(e.target);
-                                    const mobile = formData.get('mobile');
-                                    const password = formData.get('password');
-                                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-                                    if (saved?.auth?.user?.mobile === mobile && saved?.auth?.user?.password === password) {
-                                        setState(prev => ({ ...prev, auth: { isAuthenticated: true, user: saved.auth.user }, currentScreen: saved.dairyInfo.name ? 'dashboard' : 'setup' }));
-                                        notify('Logged in');
-                                    } else notify('Invalid credentials', 'error');
-                                }} className="p-10 space-y-6">
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
-                                        <input name="mobile" type="text" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Password</label>
-                                        <input name="password" type="password" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" />
-                                    </div>
-                                    <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">LOGIN SYSTEM</button>
-                                    <div className="text-center">
-                                        <button type="button" onClick={() => navigate('register')} className="text-blue-600 font-black text-sm hover:underline uppercase tracking-tighter">Register New Dairy Center</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    );
-                } else if (state.currentScreen === 'dashboard') {
-                    const today = new Date().toISOString().split('T')[0];
-                    const todayEntries = state.milkEntries.filter(e => e.date === today);
-                    const totalQty = todayEntries.reduce((acc, curr) => acc + Number(curr.qty), 0);
-                    const totalAmt = todayEntries.reduce((acc, curr) => acc + Number(curr.amount), 0);
-                    const avgFat = todayEntries.length > 0 ? (todayEntries.reduce((acc, curr) => acc + Number(curr.fat), 0) / todayEntries.length).toFixed(1) : 0;
-
-                    return (
-                        <div className="space-y-8 animate-in fade-in duration-500">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
-                                    <div className="p-4 rounded-xl bg-blue-50 text-blue-600">
-                                        <i data-lucide="droplets" style={{ width: 24, height: 24 }}></i>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Today's Milk</p>
-                                        <p className="text-2xl font-black text-slate-800">{totalQty.toFixed(1)} L</p>
-                                    </div>
-                                </div>
-                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
-                                    <div className="p-4 rounded-xl bg-green-50 text-green-600">
-                                        <i data-lucide="indian-rupee" style={{ width: 24, height: 24 }}></i>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Today's Value</p>
-                                        <p className="text-2xl font-black text-slate-800">{formatCurrency(totalAmt)}</p>
-                                    </div>
-                                </div>
-                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
-                                    <div className="p-4 rounded-xl bg-amber-50 text-amber-600">
-                                        <i data-lucide="check-circle" style={{ width: 24, height: 24 }}></i>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Avg. Fat</p>
-                                        <p className="text-2xl font-black text-slate-800">{avgFat}%</p>
-                                    </div>
-                                </div>
-                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
-                                    <div className="p-4 rounded-xl bg-rose-50 text-rose-600">
-                                        <i data-lucide="users" style={{ width: 24, height: 24 }}></i>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Farmers</p>
-                                        <p className="text-2xl font-black text-slate-800">{state.farmers.filter(f => f.active).length}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
-                                <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50/30">
-                                    <h2 className="text-lg font-bold text-slate-800">Recent Collections</h2>
-                                </div>
-                                <div className="p-6">
-                                    <table className="w-full text-left">
-                                        <thead className="border-b text-[10px] font-black text-slate-400 uppercase">
-                                            <tr>
-                                                <th className="pb-4">Farmer</th>
-                                                <th className="pb-4">Time</th>
-                                                <th className="pb-4">Qty</th>
-                                                <th className="pb-4">Fat%</th>
-                                                <th className="pb-4 text-right">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
-                                            {todayEntries.slice(0, 5).map(entry => {
-                                                const farmer = state.farmers.find(f => f.id === entry.farmerId);
-                                                return (
-                                                    <tr key={entry.id}>
-                                                        <td className="py-4 font-black">{farmer?.name || 'Unknown'}</td>
-                                                        <td className="py-4 font-bold text-slate-500">{entry.time}</td>
-                                                        <td className="py-4 font-black text-slate-700">{entry.qty} L</td>
-                                                        <td className="py-4 font-black text-amber-600">{entry.fat}</td>
-                                                        <td className="py-4 text-right font-black text-blue-600">{formatCurrency(entry.amount)}</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                } else {
-                    return <div>Loading...</div>;
+                switch (state.currentScreen) {
+                    case 'login': 
+                        return <LoginScreen state={state} setState={setState} notify={notify} navigate={navigate} />;
+                    case 'register': 
+                        return <RegisterScreen setState={setState} notify={notify} navigate={navigate} />;
+                    case 'dashboard': 
+                        return <DashboardScreen state={state} navigate={navigate} />;
+                    case 'setup':
+                        return <SetupWizard state={state} setState={setState} notify={notify} navigate={navigate} />;
+                    default:
+                        return <div className="p-8 text-center">Screen not implemented yet: {state.currentScreen}</div>;
                 }
             };
 
             const needsAuth = !['login', 'register'].includes(state.currentScreen);
 
             if (needsAuth && !state.auth.isAuthenticated) {
-                return (
-                    <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
-                        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-                            <div className="bg-blue-600 p-10 text-white text-center">
-                                <i data-lucide="droplet" style={{ width: 64, height: 64 }} className="mx-auto mb-4 text-white"></i>
-                                <h2 className="text-4xl font-black tracking-tighter">MilkBook</h2>
-                                <p className="opacity-70 text-sm font-bold uppercase tracking-widest">Automatic Milk Collection & Dairy Accounting</p>
-                            </div>
-                            <form onSubmit={(e) => {
-                                e.preventDefault();
-                                const formData = new FormData(e.target);
-                                const mobile = formData.get('mobile');
-                                const password = formData.get('password');
-                                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-                                if (saved?.auth?.user?.mobile === mobile && saved?.auth?.user?.password === password) {
-                                    setState(prev => ({ ...prev, auth: { isAuthenticated: true, user: saved.auth.user }, currentScreen: saved.dairyInfo.name ? 'dashboard' : 'setup' }));
-                                    notify('Logged in');
-                                } else notify('Invalid credentials', 'error');
-                            }} className="p-10 space-y-6">
-                                <div>
-                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
-                                    <input name="mobile" type="text" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Password</label>
-                                    <input name="password" type="password" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" />
-                                </div>
-                                <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">LOGIN SYSTEM</button>
-                                <div className="text-center">
-                                    <button type="button" onClick={() => navigate('register')} className="text-blue-600 font-black text-sm hover:underline uppercase tracking-tighter">Register New Dairy Center</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                );
+                return <LoginScreen state={state} setState={setState} notify={notify} navigate={navigate} />;
             }
 
             if (!needsAuth) {
@@ -335,7 +486,7 @@
                         <div className={`fixed top-6 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-bounce border-l-4 bg-white ${
                             notif.type === 'success' ? 'border-green-500 text-green-700' : 'border-red-500 text-red-700'
                         }`}>
-                            <i data-lucide={notif.type === 'success' ? 'check-circle' : 'alert-circle'} style={{ width: 20, height: 20 }}></i>
+                            <Icon name={notif.type === 'success' ? 'check-circle' : 'alert-circle'} size={20} />
                             <span className="font-bold">{notif.msg}</span>
                         </div>
                     )}
@@ -345,7 +496,7 @@
                         <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 text-white flex flex-col transition-all duration-300 print:hidden shrink-0`}>
                             <div className="p-6 flex items-center gap-3 border-b border-slate-800">
                                 <div className="bg-blue-600 p-2 rounded-lg">
-                                    <i data-lucide="droplet" style={{ width: 20, height: 20 }} className="text-white"></i>
+                                    <Icon name="droplet" className="text-white" size={20} />
                                 </div>
                                 {isSidebarOpen && <span className="font-bold text-xl uppercase tracking-tighter">MilkBook</span>}
                             </div>
@@ -353,68 +504,68 @@
                                 <button onClick={() => navigate('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                     state.currentScreen === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}>
-                                    <i data-lucide="layout-dashboard" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    <Icon name="layout-dashboard" size={20} className="shrink-0" />
                                     {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Dashboard</span>}
                                 </button>
                                 <button onClick={() => navigate('milkEntry')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                     state.currentScreen === 'milkEntry' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}>
-                                    <i data-lucide="droplets" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    <Icon name="droplets" size={20} className="shrink-0" />
                                     {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Milk Collection</span>}
                                 </button>
                                 <button onClick={() => navigate('farmers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                     state.currentScreen === 'farmers' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}>
-                                    <i data-lucide="users" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    <Icon name="users" size={20} className="shrink-0" />
                                     {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Farmers</span>}
                                 </button>
                                 <button onClick={() => navigate('ledger')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                     state.currentScreen === 'ledger' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}>
-                                    <i data-lucide="book-open" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    <Icon name="book-open" size={20} className="shrink-0" />
                                     {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Ledger</span>}
                                 </button>
                                 <button onClick={() => navigate('payments')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                     state.currentScreen === 'payments' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}>
-                                    <i data-lucide="indian-rupee" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    <Icon name="indian-rupee" size={20} className="shrink-0" />
                                     {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Payments</span>}
                                 </button>
                                 <button onClick={() => navigate('sales')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                     state.currentScreen === 'sales' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}>
-                                    <i data-lucide="shopping-bag" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    <Icon name="shopping-bag" size={20} className="shrink-0" />
                                     {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Milk Sales</span>}
                                 </button>
                                 <button onClick={() => navigate('inventory')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                     state.currentScreen === 'inventory' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}>
-                                    <i data-lucide="warehouse" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    <Icon name="warehouse" size={20} className="shrink-0" />
                                     {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Inventory</span>}
                                 </button>
                                 <button onClick={() => navigate('reports')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                     state.currentScreen === 'reports' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}>
-                                    <i data-lucide="bar-chart-3" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    <Icon name="bar-chart-3" size={20} className="shrink-0" />
                                     {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Reports</span>}
                                 </button>
                                 <div className="pt-6 border-t border-slate-800 mt-6 space-y-1">
                                     <button onClick={() => navigate('backup')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                         state.currentScreen === 'backup' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                     }`}>
-                                        <i data-lucide="database" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                        <Icon name="database" size={20} className="shrink-0" />
                                         {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Backup</span>}
                                     </button>
                                     <button onClick={() => navigate('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                         state.currentScreen === 'settings' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                     }`}>
-                                        <i data-lucide="settings" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                        <Icon name="settings" size={20} className="shrink-0" />
                                         {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Settings</span>}
                                     </button>
                                     <button onClick={logout} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                        state.currentScreen === 'logout' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                        'text-slate-400 hover:bg-slate-800 hover:text-white'
                                     }`}>
-                                        <i data-lucide="log-out" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                        <Icon name="log-out" size={20} className="shrink-0" />
                                         {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Logout</span>}
                                     </button>
                                 </div>
@@ -423,7 +574,7 @@
                                 onClick={() => setSidebarOpen(!isSidebarOpen)} 
                                 className="p-4 hover:bg-slate-800 flex items-center justify-center transition-colors"
                             >
-                                <i data-lucide={isSidebarOpen ? "x" : "menu"} style={{ width: 20, height: 20 }}></i>
+                                <Icon name={isSidebarOpen ? "x" : "menu"} size={20} />
                             </button>
                         </aside>
 
@@ -433,7 +584,7 @@
                                 <div className="flex items-center gap-4">
                                     <h1 className="text-xl font-bold text-slate-800 uppercase tracking-wide truncate max-w-[300px]">{state.dairyInfo.name || 'Milk Collection Center'}</h1>
                                     <span className="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-bold flex items-center gap-1">
-                                        <i data-lucide="clock" style={{ width: 14, height: 14 }}></i> {formatDate(new Date())}
+                                        <Icon name="clock" size={14} /> {formatDate(new Date())}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-6">
@@ -468,14 +619,7 @@
 
         // Render the app
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-
-        // Initialize lucide icons after app renders
-        setTimeout(() => {
-            if (window.lucide) {
-                window.lucide.createIcons();
-            }
-        }, 100);
+        root.render(React.createElement(App));
     </script>
 </body>
 </html>
