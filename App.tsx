@@ -89,7 +89,7 @@ const calculateMilkAmount = (qty, fat, snf, rateType, rates, type) => {
 /**
  * MAIN APP COMPONENT
  */
-export default function App() {
+function App() {
   const [state, setState] = useState(INITIAL_STATE);
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [notif, setNotif] = useState(null);
@@ -1512,3 +1512,5 @@ function SettingsScreen({ state, setState, notify }) {
     </div>
   );
 }
+
+export default App;
