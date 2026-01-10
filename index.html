@@ -3,37 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk ERP - Dairy Management System</title>
+    <title>MilkBook - Automatic Milk Collection & Dairy Accounting - Designed by signimus</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel CDNs -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- React & ReactDOM via CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel Standalone for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; }
-        
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+        }
+
         /* ERP Style Scrollbars */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar { 
+            width: 8px; 
+            height: 8px; 
+        }
+        ::-webkit-scrollbar-track { 
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb { 
+            background: #cbd5e1; 
+            border-radius: 4px; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background: #94a3b8; 
+        }
 
         /* Print Optimization */
         @media print {
-            .print-hidden { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; color: black; font-size: 10pt; }
-            .card { border: none !important; box-shadow: none !important; }
-            table { width: 100% !important; border-collapse: collapse !important; }
-            th, td { border: 1px solid #ddd !important; padding: 4pt !important; text-align: left !important; }
+            .print-hidden { 
+                display: none !important; 
+            }
+            .print-only { 
+                display: block !important; 
+            }
+            body { 
+                background: white; 
+                color: black; 
+                font-size: 10pt; 
+            }
+            .card { 
+                border: none !important; 
+                box-shadow: none !important; 
+            }
+            table { 
+                width: 100% !important; 
+                border-collapse: collapse !important; 
+            }
+            th, td { 
+                border: 1px solid #ddd !important; 
+                padding: 4pt !important; 
+                text-align: left !important; 
+            }
         }
 
-        .btn-transition { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-transition { 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #3b82f6;
@@ -47,7 +80,8 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        /** * CONSTANTS & HELPERS
+        /** 
+         * CONSTANTS & HELPERS
          */
         const STORAGE_KEY = 'dairy_mgmt_state_v1';
         const BACKUP_KEY = 'milk_backup_v1';
@@ -68,7 +102,7 @@
             } else if (rateType === 'Fat') {
                 calculatedRate = (baseRate / fatRef) * fat;
             }
-            
+
             return {
                 rate: Math.max(calculatedRate, 10).toFixed(2),
                 amount: (qty * Math.max(calculatedRate, 10)).toFixed(2)
@@ -92,54 +126,6 @@
             sales: [],
             inventory: [],
             settings: { backupEnabled: true, lastBackup: null, printerName: 'Default' }
-        };
-
-        /**
-         * ICON WRAPPER (To handle Lucide lifecycle in React)
-         */
-        const Icon = ({ name, size = 20, className = "" }) => {
-            const iconRef = useRef(null);
-            useEffect(() => {
-                if (window.lucide) {
-                    window.lucide.createIcons();
-                }
-            }, [name]);
-            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
-        };
-
-        /**
-         * SHARED COMPONENTS
-         */
-        const Card = ({ title, children, extra, noPadding = false }) => (
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6 transition-all hover:shadow-md">
-                {(title || extra) && (
-                    <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50/30">
-                        {title && <h2 className="text-lg font-bold text-slate-800">{title}</h2>}
-                        {extra && <div>{extra}</div>}
-                    </div>
-                )}
-                <div className={noPadding ? '' : 'p-6'}>{children}</div>
-            </div>
-        );
-
-        const StatCard = ({ label, value, iconName, color }) => {
-            const colors = {
-                blue: 'bg-blue-50 text-blue-600',
-                green: 'bg-green-50 text-green-600',
-                amber: 'bg-amber-50 text-amber-600',
-                rose: 'bg-rose-50 text-rose-600'
-            };
-            return (
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
-                    <div className={`p-4 rounded-xl ${colors[color] || colors.blue}`}>
-                        <Icon name={iconName} size={24} />
-                    </div>
-                    <div>
-                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
-                        <p className="text-2xl font-black text-slate-800">{value}</p>
-                    </div>
-                </div>
-            );
         };
 
         /**
@@ -174,30 +160,173 @@
             const navigate = (screen) => setState(prev => ({ ...prev, currentScreen: screen }));
             const logout = () => setState(prev => ({ ...prev, auth: { isAuthenticated: false, user: null }, currentScreen: 'login' }));
 
-            // Screens
+            // Simple render function for the main app
             const renderScreen = () => {
-                switch (state.currentScreen) {
-                    case 'login': return <LoginScreen state={state} setState={setState} notify={notify} navigate={navigate} />;
-                    case 'register': return <RegisterScreen setState={setState} notify={notify} navigate={navigate} />;
-                    case 'setup': return <SetupWizard state={state} setState={setState} notify={notify} navigate={navigate} />;
-                    case 'dashboard': return <DashboardScreen state={state} navigate={navigate} />;
-                    case 'milkEntry': return <MilkEntryScreen state={state} setState={setState} notify={notify} />;
-                    case 'farmers': return <FarmerManagementScreen state={state} setState={setState} notify={notify} />;
-                    case 'ledger': return <LedgerScreen state={state} />;
-                    case 'payments': return <PaymentsScreen state={state} setState={setState} notify={notify} />;
-                    case 'sales': return <SalesScreen state={state} setState={setState} notify={notify} />;
-                    case 'inventory': return <InventoryScreen state={state} setState={setState} notify={notify} />;
-                    case 'reports': return <ReportsScreen state={state} />;
-                    case 'backup': return <BackupScreen state={state} setState={setState} notify={notify} />;
-                    case 'settings': return <SettingsScreen state={state} setState={setState} notify={notify} />;
-                    default: return <LoginScreen state={state} setState={setState} notify={notify} navigate={navigate} />;
+                if (state.currentScreen === 'login') {
+                    return (
+                        <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
+                            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+                                <div className="bg-blue-600 p-10 text-white text-center">
+                                    <i data-lucide="droplet" style={{ width: 64, height: 64 }} className="mx-auto mb-4 text-white"></i>
+                                    <h2 className="text-4xl font-black tracking-tighter">MilkBook</h2>
+                                    <p className="opacity-70 text-sm font-bold uppercase tracking-widest">Automatic Milk Collection & Dairy Accounting</p>
+                                </div>
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const formData = new FormData(e.target);
+                                    const mobile = formData.get('mobile');
+                                    const password = formData.get('password');
+                                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                                    if (saved?.auth?.user?.mobile === mobile && saved?.auth?.user?.password === password) {
+                                        setState(prev => ({ ...prev, auth: { isAuthenticated: true, user: saved.auth.user }, currentScreen: saved.dairyInfo.name ? 'dashboard' : 'setup' }));
+                                        notify('Logged in');
+                                    } else notify('Invalid credentials', 'error');
+                                }} className="p-10 space-y-6">
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
+                                        <input name="mobile" type="text" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Password</label>
+                                        <input name="password" type="password" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" />
+                                    </div>
+                                    <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">LOGIN SYSTEM</button>
+                                    <div className="text-center">
+                                        <button type="button" onClick={() => navigate('register')} className="text-blue-600 font-black text-sm hover:underline uppercase tracking-tighter">Register New Dairy Center</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    );
+                } else if (state.currentScreen === 'dashboard') {
+                    const today = new Date().toISOString().split('T')[0];
+                    const todayEntries = state.milkEntries.filter(e => e.date === today);
+                    const totalQty = todayEntries.reduce((acc, curr) => acc + Number(curr.qty), 0);
+                    const totalAmt = todayEntries.reduce((acc, curr) => acc + Number(curr.amount), 0);
+                    const avgFat = todayEntries.length > 0 ? (todayEntries.reduce((acc, curr) => acc + Number(curr.fat), 0) / todayEntries.length).toFixed(1) : 0;
+
+                    return (
+                        <div className="space-y-8 animate-in fade-in duration-500">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
+                                    <div className="p-4 rounded-xl bg-blue-50 text-blue-600">
+                                        <i data-lucide="droplets" style={{ width: 24, height: 24 }}></i>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Today's Milk</p>
+                                        <p className="text-2xl font-black text-slate-800">{totalQty.toFixed(1)} L</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
+                                    <div className="p-4 rounded-xl bg-green-50 text-green-600">
+                                        <i data-lucide="indian-rupee" style={{ width: 24, height: 24 }}></i>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Today's Value</p>
+                                        <p className="text-2xl font-black text-slate-800">{formatCurrency(totalAmt)}</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
+                                    <div className="p-4 rounded-xl bg-amber-50 text-amber-600">
+                                        <i data-lucide="check-circle" style={{ width: 24, height: 24 }}></i>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Avg. Fat</p>
+                                        <p className="text-2xl font-black text-slate-800">{avgFat}%</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-5">
+                                    <div className="p-4 rounded-xl bg-rose-50 text-rose-600">
+                                        <i data-lucide="users" style={{ width: 24, height: 24 }}></i>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Farmers</p>
+                                        <p className="text-2xl font-black text-slate-800">{state.farmers.filter(f => f.active).length}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
+                                <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50/30">
+                                    <h2 className="text-lg font-bold text-slate-800">Recent Collections</h2>
+                                </div>
+                                <div className="p-6">
+                                    <table className="w-full text-left">
+                                        <thead className="border-b text-[10px] font-black text-slate-400 uppercase">
+                                            <tr>
+                                                <th className="pb-4">Farmer</th>
+                                                <th className="pb-4">Time</th>
+                                                <th className="pb-4">Qty</th>
+                                                <th className="pb-4">Fat%</th>
+                                                <th className="pb-4 text-right">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {todayEntries.slice(0, 5).map(entry => {
+                                                const farmer = state.farmers.find(f => f.id === entry.farmerId);
+                                                return (
+                                                    <tr key={entry.id}>
+                                                        <td className="py-4 font-black">{farmer?.name || 'Unknown'}</td>
+                                                        <td className="py-4 font-bold text-slate-500">{entry.time}</td>
+                                                        <td className="py-4 font-black text-slate-700">{entry.qty} L</td>
+                                                        <td className="py-4 font-black text-amber-600">{entry.fat}</td>
+                                                        <td className="py-4 text-right font-black text-blue-600">{formatCurrency(entry.amount)}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                } else {
+                    return <div>Loading...</div>;
                 }
             };
 
             const needsAuth = !['login', 'register'].includes(state.currentScreen);
-            
+
             if (needsAuth && !state.auth.isAuthenticated) {
-                return <LoginScreen state={state} setState={setState} notify={notify} navigate={navigate} />;
+                return (
+                    <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
+                        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+                            <div className="bg-blue-600 p-10 text-white text-center">
+                                <i data-lucide="droplet" style={{ width: 64, height: 64 }} className="mx-auto mb-4 text-white"></i>
+                                <h2 className="text-4xl font-black tracking-tighter">MilkBook</h2>
+                                <p className="opacity-70 text-sm font-bold uppercase tracking-widest">Automatic Milk Collection & Dairy Accounting</p>
+                            </div>
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.target);
+                                const mobile = formData.get('mobile');
+                                const password = formData.get('password');
+                                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                                if (saved?.auth?.user?.mobile === mobile && saved?.auth?.user?.password === password) {
+                                    setState(prev => ({ ...prev, auth: { isAuthenticated: true, user: saved.auth.user }, currentScreen: saved.dairyInfo.name ? 'dashboard' : 'setup' }));
+                                    notify('Logged in');
+                                } else notify('Invalid credentials', 'error');
+                            }} className="p-10 space-y-6">
+                                <div>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
+                                    <input name="mobile" type="text" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Password</label>
+                                    <input name="password" type="password" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" />
+                                </div>
+                                <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">LOGIN SYSTEM</button>
+                                <div className="text-center">
+                                    <button type="button" onClick={() => navigate('register')} className="text-blue-600 font-black text-sm hover:underline uppercase tracking-tighter">Register New Dairy Center</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (!needsAuth) {
+                return renderScreen();
             }
 
             return (
@@ -206,740 +335,147 @@
                         <div className={`fixed top-6 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-bounce border-l-4 bg-white ${
                             notif.type === 'success' ? 'border-green-500 text-green-700' : 'border-red-500 text-red-700'
                         }`}>
-                            <Icon name={notif.type === 'success' ? 'check-circle' : 'alert-circle'} />
+                            <i data-lucide={notif.type === 'success' ? 'check-circle' : 'alert-circle'} style={{ width: 20, height: 20 }}></i>
                             <span className="font-bold">{notif.msg}</span>
                         </div>
                     )}
 
-                    {needsAuth ? (
-                        <>
-                            {/* Sidebar */}
-                            <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 text-white flex flex-col transition-all duration-300 print:hidden shrink-0`}>
-                                <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-                                    <div className="bg-blue-600 p-2 rounded-lg"><Icon name="droplet" className="text-white" /></div>
-                                    {isSidebarOpen && <span className="font-bold text-xl uppercase tracking-tighter">Milk ERP</span>}
+                    <>
+                        {/* Sidebar */}
+                        <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 text-white flex flex-col transition-all duration-300 print:hidden shrink-0`}>
+                            <div className="p-6 flex items-center gap-3 border-b border-slate-800">
+                                <div className="bg-blue-600 p-2 rounded-lg">
+                                    <i data-lucide="droplet" style={{ width: 20, height: 20 }} className="text-white"></i>
                                 </div>
-                                <nav className="flex-1 mt-4 px-3 space-y-1">
-                                    <SidebarNavItem icon="layout-dashboard" label="Dashboard" active={state.currentScreen === 'dashboard'} onClick={() => navigate('dashboard')} collapsed={!isSidebarOpen} />
-                                    <SidebarNavItem icon="droplets" label="Milk Collection" active={state.currentScreen === 'milkEntry'} onClick={() => navigate('milkEntry')} collapsed={!isSidebarOpen} />
-                                    <SidebarNavItem icon="users" label="Farmers" active={state.currentScreen === 'farmers'} onClick={() => navigate('farmers')} collapsed={!isSidebarOpen} />
-                                    <SidebarNavItem icon="book-open" label="Ledger" active={state.currentScreen === 'ledger'} onClick={() => navigate('ledger')} collapsed={!isSidebarOpen} />
-                                    <SidebarNavItem icon="indian-rupee" label="Payments" active={state.currentScreen === 'payments'} onClick={() => navigate('payments')} collapsed={!isSidebarOpen} />
-                                    <SidebarNavItem icon="shopping-bag" label="Milk Sales" active={state.currentScreen === 'sales'} onClick={() => navigate('sales')} collapsed={!isSidebarOpen} />
-                                    <SidebarNavItem icon="warehouse" label="Inventory" active={state.currentScreen === 'inventory'} onClick={() => navigate('inventory')} collapsed={!isSidebarOpen} />
-                                    <SidebarNavItem icon="bar-chart-3" label="Reports" active={state.currentScreen === 'reports'} onClick={() => navigate('reports')} collapsed={!isSidebarOpen} />
-                                    <div className="pt-6 border-t border-slate-800 mt-6 space-y-1">
-                                        <SidebarNavItem icon="database" label="Backup" active={state.currentScreen === 'backup'} onClick={() => navigate('backup')} collapsed={!isSidebarOpen} />
-                                        <SidebarNavItem icon="settings" label="Settings" active={state.currentScreen === 'settings'} onClick={() => navigate('settings')} collapsed={!isSidebarOpen} />
-                                        <SidebarNavItem icon="log-out" label="Logout" onClick={logout} collapsed={!isSidebarOpen} />
-                                    </div>
-                                </nav>
-                                <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-4 hover:bg-slate-800 flex items-center justify-center transition-colors">
-                                    <Icon name={isSidebarOpen ? "x" : "menu"} />
+                                {isSidebarOpen && <span className="font-bold text-xl uppercase tracking-tighter">MilkBook</span>}
+                            </div>
+                            <nav className="flex-1 mt-4 px-3 space-y-1">
+                                <button onClick={() => navigate('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    state.currentScreen === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}>
+                                    <i data-lucide="layout-dashboard" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Dashboard</span>}
                                 </button>
-                            </aside>
-
-                            {/* Main */}
-                            <main className="flex-1 flex flex-col min-w-0">
-                                <header className="h-16 bg-white border-b flex items-center justify-between px-8 shrink-0 print:hidden shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <h1 className="text-xl font-bold text-slate-800 uppercase tracking-wide truncate max-w-[300px]">{state.dairyInfo.name || 'Milk Collection Center'}</h1>
-                                        <span className="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-bold flex items-center gap-1">
-                                            <Icon name="clock" size={14}/> {formatDate(new Date())}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-6">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-2.5 h-2.5 rounded-full ${state.settings.backupEnabled ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">System Healthy</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-right">
-                                                <p className="text-sm font-bold text-slate-700">{state.auth.user?.name}</p>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Administrator</p>
-                                            </div>
-                                            <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center font-black text-slate-600 border shadow-inner">
-                                                {state.auth.user?.name?.charAt(0) || 'U'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </header>
-                                <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
-                                    {renderScreen()}
+                                <button onClick={() => navigate('milkEntry')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    state.currentScreen === 'milkEntry' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}>
+                                    <i data-lucide="droplets" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Milk Collection</span>}
+                                </button>
+                                <button onClick={() => navigate('farmers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    state.currentScreen === 'farmers' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}>
+                                    <i data-lucide="users" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Farmers</span>}
+                                </button>
+                                <button onClick={() => navigate('ledger')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    state.currentScreen === 'ledger' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}>
+                                    <i data-lucide="book-open" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Ledger</span>}
+                                </button>
+                                <button onClick={() => navigate('payments')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    state.currentScreen === 'payments' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}>
+                                    <i data-lucide="indian-rupee" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Payments</span>}
+                                </button>
+                                <button onClick={() => navigate('sales')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    state.currentScreen === 'sales' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}>
+                                    <i data-lucide="shopping-bag" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Milk Sales</span>}
+                                </button>
+                                <button onClick={() => navigate('inventory')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    state.currentScreen === 'inventory' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}>
+                                    <i data-lucide="warehouse" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Inventory</span>}
+                                </button>
+                                <button onClick={() => navigate('reports')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    state.currentScreen === 'reports' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}>
+                                    <i data-lucide="bar-chart-3" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                    {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Reports</span>}
+                                </button>
+                                <div className="pt-6 border-t border-slate-800 mt-6 space-y-1">
+                                    <button onClick={() => navigate('backup')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                        state.currentScreen === 'backup' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                    }`}>
+                                        <i data-lucide="database" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                        {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Backup</span>}
+                                    </button>
+                                    <button onClick={() => navigate('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                        state.currentScreen === 'settings' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                    }`}>
+                                        <i data-lucide="settings" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                        {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Settings</span>}
+                                    </button>
+                                    <button onClick={logout} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                        state.currentScreen === 'logout' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                    }`}>
+                                        <i data-lucide="log-out" style={{ width: 20, height: 20 }} className="shrink-0"></i>
+                                        {!isSidebarOpen || <span className="font-bold text-sm tracking-tight">Logout</span>}
+                                    </button>
                                 </div>
-                            </main>
-                        </>
-                    ) : renderScreen()}
+                            </nav>
+                            <button 
+                                onClick={() => setSidebarOpen(!isSidebarOpen)} 
+                                className="p-4 hover:bg-slate-800 flex items-center justify-center transition-colors"
+                            >
+                                <i data-lucide={isSidebarOpen ? "x" : "menu"} style={{ width: 20, height: 20 }}></i>
+                            </button>
+                        </aside>
+
+                        {/* Main */}
+                        <main className="flex-1 flex flex-col min-w-0">
+                            <header className="h-16 bg-white border-b flex items-center justify-between px-8 shrink-0 print:hidden shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <h1 className="text-xl font-bold text-slate-800 uppercase tracking-wide truncate max-w-[300px]">{state.dairyInfo.name || 'Milk Collection Center'}</h1>
+                                    <span className="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-bold flex items-center gap-1">
+                                        <i data-lucide="clock" style={{ width: 14, height: 14 }}></i> {formatDate(new Date())}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`w-2.5 h-2.5 rounded-full ${state.settings.backupEnabled ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">System Healthy</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold text-slate-700">{state.auth.user?.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Administrator</p>
+                                        </div>
+                                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center font-black text-slate-600 border shadow-inner">
+                                            {state.auth.user?.name?.charAt(0) || 'U'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </header>
+                            <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+                                {renderScreen()}
+                            </div>
+                        </main>
+                    </>
+
+                    {/* Footer with designer attribution */}
+                    <footer className="print:hidden text-center py-4 text-slate-500 text-sm border-t bg-slate-50">
+                        Designed by <span className="font-bold text-slate-700">signimus</span>
+                    </footer>
                 </div>
             );
         }
 
-        const SidebarNavItem = ({ icon, label, active, onClick, collapsed }) => (
-            <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-            }`}>
-                <Icon name={icon} size={20} className="shrink-0" />
-                {!collapsed && <span className="font-bold text-sm tracking-tight">{label}</span>}
-            </button>
-        );
-
-        /**
-         * SCREEN: LOGIN & REGISTER
-         */
-        const LoginScreen = ({ state, setState, notify, navigate }) => {
-            const [formData, setFormData] = useState({ mobile: '', password: '' });
-            const handleLogin = (e) => {
-                e.preventDefault();
-                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-                if (saved?.auth?.user?.mobile === formData.mobile && saved?.auth?.user?.password === formData.password) {
-                    setState(prev => ({ ...prev, auth: { isAuthenticated: true, user: saved.auth.user }, currentScreen: saved.dairyInfo.name ? 'dashboard' : 'setup' }));
-                    notify('Logged in');
-                } else notify('Invalid credentials', 'error');
-            };
-            return (
-                <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
-                    <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-                        <div className="bg-blue-600 p-10 text-white text-center">
-                            <Icon name="droplet" size={64} className="mx-auto mb-4" />
-                            <h2 className="text-4xl font-black tracking-tighter">MILK ERP</h2>
-                            <p className="opacity-70 text-sm font-bold uppercase tracking-widest">Enterprise Dairy Management</p>
-                        </div>
-                        <form onSubmit={handleLogin} className="p-10 space-y-6">
-                            <div>
-                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
-                                <input type="text" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={formData.mobile} onChange={e => setFormData({ ...formData, mobile: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Password</label>
-                                <input type="password" required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
-                            </div>
-                            <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">LOGIN SYSTEM</button>
-                            <div className="text-center">
-                                <button type="button" onClick={() => navigate('register')} className="text-blue-600 font-black text-sm hover:underline uppercase tracking-tighter">Register New Dairy Center</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        const RegisterScreen = ({ setState, notify, navigate }) => {
-            const [form, setForm] = useState({ dairyName: '', ownerName: '', mobile: '', password: '', confirm: '' });
-            const handleRegister = (e) => {
-                e.preventDefault();
-                if (form.password !== form.confirm) return notify("Passwords mismatch", 'error');
-                const user = { name: form.ownerName, mobile: form.mobile, password: form.password };
-                setState(prev => ({ ...prev, auth: { isAuthenticated: true, user }, dairyInfo: { ...prev.dairyInfo, name: form.dairyName, owner: form.ownerName, mobile: form.mobile }, currentScreen: 'setup' }));
-                notify("Registered");
-            };
-            return (
-                <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 p-4">
-                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-12">
-                        <h2 className="text-3xl font-black text-slate-800 mb-2 tracking-tighter uppercase">Register Center</h2>
-                        <p className="text-slate-500 font-bold mb-8">Setup your digital procurement system.</p>
-                        <form onSubmit={handleRegister} className="grid grid-cols-2 gap-6">
-                            <div className="col-span-2">
-                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Dairy Name</label>
-                                <input required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={form.dairyName} onChange={e => setForm({...form, dairyName: e.target.value})} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Owner Name</label>
-                                <input required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={form.ownerName} onChange={e => setForm({...form, ownerName: e.target.value})} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Mobile</label>
-                                <input required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={form.mobile} onChange={e => setForm({...form, mobile: e.target.value})} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Password</label>
-                                <input type="password" required className="w-full p-4 bg-slate-50 border rounded-xl" value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Confirm</label>
-                                <input type="password" required className="w-full p-4 bg-slate-50 border rounded-xl" value={form.confirm} onChange={e => setForm({...form, confirm: e.target.value})} />
-                            </div>
-                            <button type="submit" className="col-span-2 py-5 bg-blue-600 text-white rounded-xl font-black text-xl hover:bg-blue-700">INITIALIZE DAIRY SYSTEM</button>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        /**
-         * SETUP WIZARD
-         */
-        const SetupWizard = ({ state, setState, notify, navigate }) => {
-            const [step, setStep] = useState(1);
-            const [dairy, setDairy] = useState(state.dairyInfo);
-            const complete = () => {
-                setState(prev => ({ ...prev, dairyInfo: dairy, currentScreen: 'dashboard' }));
-                notify("Setup Complete");
-            };
-            return (
-                <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4">
-                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl border overflow-hidden">
-                        <div className="flex bg-slate-100 border-b">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className={`flex-1 py-4 text-center text-xs font-black uppercase tracking-widest ${step === i ? 'bg-white text-blue-600 border-b-4 border-blue-600' : 'text-slate-400'}`}>Step {i}</div>
-                            ))}
-                        </div>
-                        <div className="p-12 space-y-8 text-center">
-                            {step === 1 && (
-                                <>
-                                    <Icon name="map-pin" size={48} className="mx-auto text-blue-600" />
-                                    <h3 className="text-3xl font-black tracking-tight uppercase">Location Details</h3>
-                                    <textarea className="w-full p-4 border rounded-xl min-h-[120px] font-bold" value={dairy.address} onChange={e => setDairy({...dairy, address: e.target.value})} placeholder="Dairy Address (Village, District...)"></textarea>
-                                    <button onClick={() => setStep(2)} className="w-full py-5 bg-blue-600 text-white rounded-xl font-black">Next Step</button>
-                                </>
-                            )}
-                            {step === 2 && (
-                                <>
-                                    <Icon name="calculator" size={48} className="mx-auto text-blue-600" />
-                                    <h3 className="text-3xl font-black tracking-tight uppercase">Rate Method</h3>
-                                    <div className="grid grid-cols-1 gap-4 text-left">
-                                        {['Fat_SNF', 'Fat'].map(m => (
-                                            <label key={m} className={`p-6 border-2 rounded-2xl cursor-pointer flex items-center justify-between transition-all ${dairy.rateType === m ? 'border-blue-600 bg-blue-50' : 'border-slate-100'}`}>
-                                                <span className="font-black text-lg uppercase tracking-tight">{m.replace('_', ' + ')} Calculation</span>
-                                                <input type="radio" checked={dairy.rateType === m} onChange={() => setDairy({...dairy, rateType: m})} className="w-6 h-6" />
-                                            </label>
-                                        ))}
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <button onClick={() => setStep(1)} className="flex-1 py-5 bg-slate-100 font-black rounded-xl uppercase">Back</button>
-                                        <button onClick={() => setStep(3)} className="flex-1 py-5 bg-blue-600 text-white font-black rounded-xl uppercase">Next</button>
-                                    </div>
-                                </>
-                            )}
-                            {step === 3 && (
-                                <>
-                                    <Icon name="check-circle" size={48} className="mx-auto text-green-600" />
-                                    <h3 className="text-3xl font-black tracking-tight uppercase">Ready to Start</h3>
-                                    <p className="text-slate-500 font-bold">Your dairy center <span className="text-slate-800 font-black underline">{dairy.name}</span> is configured.</p>
-                                    <button onClick={complete} className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-xl shadow-xl shadow-blue-200">LAUNCH SYSTEM</button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        /**
-         * DASHBOARD
-         */
-        const DashboardScreen = ({ state, navigate }) => {
-            const today = new Date().toISOString().split('T')[0];
-            const todayEntries = state.milkEntries.filter(e => e.date === today);
-            const totalQty = todayEntries.reduce((a, b) => a + Number(b.qty), 0);
-            const totalAmt = todayEntries.reduce((a, b) => a + Number(b.amount), 0);
-            const activeFarmersCount = state.farmers.filter(f => f.active).length;
-
-            return (
-                <div className="space-y-8 animate-in fade-in duration-500">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <StatCard label="Today's Milk" value={`${totalQty.toFixed(1)} L`} iconName="droplets" color="blue" />
-                        <StatCard label="Today's Value" value={formatCurrency(totalAmt)} iconName="indian-rupee" color="green" />
-                        <StatCard label="Avg. Quality" value="Mix" iconName="award" color="amber" />
-                        <StatCard label="Active Farmers" value={activeFarmersCount} iconName="users" color="rose" />
-                    </div>
-
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                        <div className="xl:col-span-2">
-                            <Card title="Latest Collections Today" extra={<button onClick={() => navigate('milkEntry')} className="text-blue-600 font-black text-xs uppercase tracking-widest hover:underline">Full Log</button>}>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="text-slate-400 text-[10px] font-black uppercase tracking-widest border-b">
-                                                <th className="pb-4">Farmer</th>
-                                                <th className="pb-4">Quantity</th>
-                                                <th className="pb-4">Quality</th>
-                                                <th className="pb-4 text-right">Value</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
-                                            {todayEntries.slice(-5).reverse().map((e, i) => (
-                                                <tr key={i} className="hover:bg-slate-50">
-                                                    <td className="py-4">
-                                                        <p className="font-bold text-slate-800">{e.farmerName}</p>
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase">{e.shift}</p>
-                                                    </td>
-                                                    <td className="py-4 font-black text-slate-700">{e.qty} L</td>
-                                                    <td className="py-4 text-xs font-bold text-slate-500">{e.fat}% / {e.snf}</td>
-                                                    <td className="py-4 text-right font-black text-blue-600">{formatCurrency(e.amount)}</td>
-                                                </tr>
-                                            ))}
-                                            {todayEntries.length === 0 && <tr><td colSpan="4" className="py-12 text-center text-slate-400 font-bold italic">No entries for today yet.</td></tr>}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </Card>
-                        </div>
-                        <div className="space-y-6">
-                            <Card title="Quick Tasks">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <QuickActionBtn icon="plus" label="New Entry" color="bg-blue-600" onClick={() => navigate('milkEntry')} />
-                                    <QuickActionBtn icon="user-plus" label="Add Farmer" color="bg-green-600" onClick={() => navigate('farmers')} />
-                                    <QuickActionBtn icon="indian-rupee" label="Pay Out" color="bg-purple-600" onClick={() => navigate('payments')} />
-                                    <QuickActionBtn icon="bar-chart-3" label="Reports" color="bg-slate-800" onClick={() => navigate('reports')} />
-                                </div>
-                            </Card>
-                            <Card title="Data Sync">
-                                <div className="flex justify-between items-center text-xs font-bold border-b pb-4">
-                                    <span className="text-slate-400 uppercase tracking-widest">Local Backup</span>
-                                    <span className="text-slate-700">{state.settings.lastBackup ? formatDate(state.settings.lastBackup) : 'Never'}</span>
-                                </div>
-                                <button onClick={() => navigate('backup')} className="w-full mt-4 py-3 bg-slate-900 text-white rounded-xl font-black text-xs uppercase tracking-widest">Configure Backup</button>
-                            </Card>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const QuickActionBtn = ({ icon, label, color, onClick }) => (
-            <button onClick={onClick} className={`flex flex-col items-center justify-center p-6 rounded-2xl text-white transition-all hover:scale-105 active:scale-95 ${color}`}>
-                <Icon name={icon} size={24} className="mb-2" />
-                <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
-            </button>
-        );
-
-        /**
-         * MILK ENTRY SCREEN
-         */
-        const MilkEntryScreen = ({ state, setState, notify }) => {
-            const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], shift: 'Morning', farmerId: '', type: 'Cow', qty: '', fat: '', snf: '', rate: '0', amount: '0' });
-            const activeFarmers = state.farmers.filter(f => f.active);
-
-            useEffect(() => {
-                if (form.qty && form.fat && form.snf) {
-                    const calc = calculateMilkAmount(form.qty, form.fat, form.snf, state.dairyInfo.rateType, state.rates, form.type);
-                    setForm(prev => ({ ...prev, rate: calc.rate, amount: calc.amount }));
-                }
-            }, [form.qty, form.fat, form.snf, form.type, state.rates, state.dairyInfo.rateType]);
-
-            const save = (e) => {
-                e.preventDefault();
-                if (!form.farmerId || !form.qty) return notify("Missing Info", "error");
-                const farmer = state.farmers.find(f => f.id === form.farmerId);
-                const entry = { ...form, id: Date.now().toString(), farmerName: farmer.name, timestamp: new Date().toISOString() };
-                setState(prev => ({ ...prev, milkEntries: [...prev.milkEntries, entry] }));
-                notify(`Saved for ${farmer.name}`);
-                setForm({...form, qty: '', fat: '', snf: '', rate: '0', amount: '0' });
-            };
-
-            const current = state.milkEntries.filter(e => e.date === form.date && e.shift === form.shift);
-
-            return (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <div className="lg:col-span-4">
-                        <Card title="Collection Entry">
-                            <form onSubmit={save} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date</label><input type="date" className="w-full p-3 bg-slate-50 border rounded-xl font-bold" value={form.date} onChange={e => setForm({...form, date: e.target.value})} /></div>
-                                    <div><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Shift</label><select className="w-full p-3 bg-slate-50 border rounded-xl font-bold" value={form.shift} onChange={e => setForm({...form, shift: e.target.value})}><option>Morning</option><option>Evening</option></select></div>
-                                </div>
-                                <div><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Farmer</label><select required className="w-full p-3 bg-slate-50 border rounded-xl font-bold text-lg" value={form.farmerId} onChange={e => setForm({...form, farmerId: e.target.value})}><option value="">-- Choose --</option>{activeFarmers.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Milk Type</label><select className="w-full p-3 bg-slate-50 border rounded-xl font-bold" value={form.type} onChange={e => setForm({...form, type: e.target.value})}><option>Cow</option><option>Buffalo</option></select></div>
-                                    <div><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Liters</label><input type="number" step="0.1" required className="w-full p-3 bg-white border-2 border-blue-100 rounded-xl font-black text-lg text-blue-600" value={form.qty} onChange={e => setForm({...form, qty: e.target.value})} /></div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fat %</label><input type="number" step="0.1" required className="w-full p-3 bg-white border rounded-xl font-bold" value={form.fat} onChange={e => setForm({...form, fat: e.target.value})} /></div>
-                                    <div><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">SNF</label><input type="number" step="0.1" required className="w-full p-3 bg-white border rounded-xl font-bold" value={form.snf} onChange={e => setForm({...form, snf: e.target.value})} /></div>
-                                </div>
-                                <div className="bg-blue-600 p-6 rounded-2xl text-white flex flex-col items-center justify-center shadow-lg shadow-blue-200">
-                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Value</span>
-                                    <span className="text-3xl font-black">{formatCurrency(form.amount)}</span>
-                                    <span className="text-xs font-bold opacity-80 mt-1">₹{form.rate} / Litre</span>
-                                </div>
-                                <button type="submit" className="w-full py-5 bg-slate-900 text-white rounded-xl font-black text-lg shadow-xl hover:bg-black uppercase tracking-tighter">Save Collection</button>
-                            </form>
-                        </Card>
-                    </div>
-                    <div className="lg:col-span-8">
-                        <Card title={`${form.date} | ${form.shift} Log`} extra={<button onClick={() => window.print()} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><Icon name="printer" size={16}/></button>}>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="border-b text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                            <th className="pb-4">Farmer</th>
-                                            <th className="pb-4">Qty</th>
-                                            <th className="pb-4">Quality</th>
-                                            <th className="pb-4">Amount</th>
-                                            <th className="pb-4 text-right">Delete</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {current.map((e, idx) => (
-                                            <tr key={idx} className="hover:bg-slate-50">
-                                                <td className="py-4 font-bold">{e.farmerName}</td>
-                                                <td className="py-4 font-black text-slate-600">{e.qty} L</td>
-                                                <td className="py-4 text-xs font-bold text-slate-500">{e.fat}% F / {e.snf} S</td>
-                                                <td className="py-4 font-black text-blue-600">{formatCurrency(e.amount)}</td>
-                                                <td className="py-4 text-right">
-                                                    <button onClick={() => { if(confirm("Delete?")) setState(p => ({...p, milkEntries: p.milkEntries.filter(i => i.id !== e.id)}))}} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"><Icon name="trash-2" size={16}/></button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {current.length === 0 && <tr><td colSpan="5" className="py-20 text-center text-slate-400 font-bold italic">Shift list is empty.</td></tr>}
-                                    </tbody>
-                                    {current.length > 0 && (
-                                        <tfoot>
-                                            <tr className="bg-slate-50 font-black">
-                                                <td className="py-4 px-2 uppercase text-xs">Total</td>
-                                                <td className="py-4">{current.reduce((a, b) => a + Number(b.qty), 0).toFixed(1)} L</td>
-                                                <td className="py-4"></td>
-                                                <td className="py-4 text-blue-600">{formatCurrency(current.reduce((a, b) => a + Number(b.amount), 0))}</td>
-                                                <td></td>
-                                            </tr>
-                                        </tfoot>
-                                    )}
-                                </table>
-                            </div>
-                        </Card>
-                    </div>
-                </div>
-            );
-        };
-
-        /**
-         * FARMER MANAGEMENT
-         */
-        const FarmerManagementScreen = ({ state, setState, notify }) => {
-            const [showModal, setShowModal] = useState(false);
-            const [editId, setEditId] = useState(null);
-            const [form, setForm] = useState({ name: '', mobile: '', village: '', openingBalance: '0' });
-
-            const reset = () => { setForm({ name: '', mobile: '', village: '', openingBalance: '0' }); setEditId(null); setShowModal(false); };
-
-            const save = (e) => {
-                e.preventDefault();
-                if (editId) {
-                    setState(p => ({ ...p, farmers: p.farmers.map(f => f.id === editId ? { ...f, ...form } : f) }));
-                    notify("Updated");
-                } else {
-                    const id = (state.farmers.length + 1001).toString();
-                    setState(p => ({ ...p, farmers: [...p.farmers, { ...form, id, active: true, createdAt: new Date().toISOString() }] }));
-                    notify("Farmer added");
-                }
-                reset();
-            };
-
-            return (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Farmer Registry</h2>
-                        <button onClick={() => setShowModal(true)} className="px-6 py-4 bg-blue-600 text-white rounded-xl font-black flex items-center gap-2 uppercase text-xs tracking-widest"><Icon name="user-plus" size={18}/> New Farmer</button>
-                    </div>
-
-                    {showModal && (
-                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                            <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-10 animate-in zoom-in duration-200">
-                                <h3 className="text-2xl font-black mb-6 uppercase tracking-tight">{editId ? 'Update Farmer' : 'New Registration'}</h3>
-                                <form onSubmit={save} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="col-span-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Full Name</label>
-                                            <input required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mobile</label>
-                                            <input required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={form.mobile} onChange={e => setForm({...form, mobile: e.target.value})} />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Village</label>
-                                            <input className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={form.village} onChange={e => setForm({...form, village: e.target.value})} />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Opening Bal (₹)</label>
-                                        <input type="number" className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={form.openingBalance} onChange={e => setForm({...form, openingBalance: e.target.value})} />
-                                    </div>
-                                    <div className="flex gap-4 pt-4">
-                                        <button type="button" onClick={reset} className="flex-1 py-4 bg-slate-100 rounded-xl font-black uppercase text-xs">Cancel</button>
-                                        <button type="submit" className="flex-1 py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-xs">Confirm</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    <Card noPadding>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50 border-b">
-                                    <tr className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                                        <th className="px-6 py-4">ID</th>
-                                        <th className="px-6 py-4">Farmer Details</th>
-                                        <th className="px-6 py-4">Village</th>
-                                        <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {state.farmers.map(f => (
-                                        <tr key={f.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-4 font-black text-slate-400">{f.id}</td>
-                                            <td className="px-6 py-4">
-                                                <p className="font-bold text-slate-800">{f.name}</p>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase">{f.mobile}</p>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm font-bold text-slate-600">{f.village}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${f.active ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}`}>{f.active ? 'Active' : 'Offline'}</span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right space-x-2">
-                                                <button onClick={() => { setForm(f); setEditId(f.id); setShowModal(true); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Icon name="edit" size={16}/></button>
-                                                <button onClick={() => { setState(p => ({...p, farmers: p.farmers.map(i => i.id === f.id ? {...i, active: !i.active} : i)}))}} className={`p-2 rounded-lg ${f.active ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}><Icon name="power" size={16}/></button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {state.farmers.length === 0 && <tr><td colSpan="5" className="py-24 text-center text-slate-400 font-bold italic">No farmers registered in the system.</td></tr>}
-                                </tbody>
-                            </table>
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        /**
-         * LEDGER & PAYMENTS
-         */
-        const LedgerScreen = ({ state }) => {
-            const [selected, setSelected] = useState('');
-            const history = useMemo(() => {
-                if (!selected) return [];
-                const farmer = state.farmers.find(f => f.id === selected);
-                let bal = Number(farmer.openingBalance || 0);
-                const data = [{ date: farmer.createdAt, desc: 'Opening Balance', dr: 0, cr: bal, bal }];
-                
-                state.milkEntries.filter(e => e.farmerId === selected).forEach(e => {
-                    bal += Number(e.amount);
-                    data.push({ date: e.timestamp, desc: `Milk Collection (${e.qty}L)`, dr: 0, cr: Number(e.amount), bal });
-                });
-
-                state.payments.filter(p => p.farmerId === selected).forEach(p => {
-                    bal -= Number(p.amount);
-                    data.push({ date: p.timestamp, desc: `Payment (${p.mode})`, dr: Number(p.amount), cr: 0, bal });
-                });
-
-                return data.sort((a,b) => new Date(a.date) - new Date(b.date));
-            }, [selected, state]);
-
-            return (
-                <div className="space-y-6">
-                    <Card title="Farmer Account Statement" extra={<select className="p-3 border-2 border-slate-100 rounded-xl font-bold min-w-[240px]" value={selected} onChange={e => setSelected(e.target.value)}><option value="">-- Search Farmer --</option>{state.farmers.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select>}>
-                        {!selected ? <div className="py-24 text-center text-slate-400 font-bold italic">Select a farmer to generate the ledger statement.</div> : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="border-b text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                            <th className="pb-4">Date</th>
-                                            <th className="pb-4">Transaction</th>
-                                            <th className="pb-4 text-right text-rose-500">Debit (Paid)</th>
-                                            <th className="pb-4 text-right text-green-500">Credit (Earn)</th>
-                                            <th className="pb-4 text-right">Balance</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {history.map((h, i) => (
-                                            <tr key={i} className="hover:bg-slate-50">
-                                                <td className="py-4 text-xs font-bold text-slate-400">{formatDate(h.date)}</td>
-                                                <td className="py-4 font-bold text-slate-700">{h.desc}</td>
-                                                <td className="py-4 text-right font-black text-rose-500">{h.dr > 0 ? formatCurrency(h.dr) : '-'}</td>
-                                                <td className="py-4 text-right font-black text-green-500">{h.cr > 0 ? formatCurrency(h.cr) : '-'}</td>
-                                                <td className="py-4 text-right font-black text-slate-900">{formatCurrency(h.bal)}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </Card>
-                </div>
-            );
-        };
-
-        const PaymentsScreen = ({ state, setState, notify }) => {
-            const [form, setForm] = useState({ farmerId: '', amount: '', mode: 'Cash', remarks: '' });
-            const save = (e) => {
-                e.preventDefault();
-                if (!form.farmerId || !form.amount) return;
-                const farmer = state.farmers.find(f => f.id === form.farmerId);
-                const payment = { ...form, id: Date.now().toString(), farmerName: farmer.name, timestamp: new Date().toISOString() };
-                setState(p => ({ ...p, payments: [...p.payments, payment] }));
-                notify(`Paid ₹${form.amount} to ${farmer.name}`);
-                setForm({ farmerId: '', amount: '', mode: 'Cash', remarks: '' });
-            };
-            return (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card title="New Payment Out">
-                        <form onSubmit={save} className="space-y-6">
-                            <div><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Select Farmer</label><select required className="w-full p-4 border rounded-xl font-black text-lg" value={form.farmerId} onChange={e => setForm({...form, farmerId: e.target.value})}><option value="">-- Choose --</option>{state.farmers.filter(f => f.active).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
-                            <div><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Amount to Pay</label><input type="number" required className="w-full p-6 border-2 border-blue-50 text-blue-600 rounded-2xl font-black text-3xl" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} /></div>
-                            <div><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Payment Mode</label><div className="grid grid-cols-3 gap-2">{['Cash', 'Online', 'Bank'].map(m => <button key={m} type="button" onClick={() => setForm({...form, mode: m})} className={`py-4 rounded-xl font-black text-xs uppercase tracking-widest border-2 transition-all ${form.mode === m ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-400 border-slate-50 hover:border-slate-100'}`}>{m}</button>)}</div></div>
-                            <button type="submit" className="w-full py-5 bg-green-600 text-white rounded-xl font-black text-xl hover:bg-green-700 shadow-xl shadow-green-100 uppercase tracking-tighter">Issue Payment Voucher</button>
-                        </form>
-                    </Card>
-                    <Card title="Recent Disbursements">
-                        <div className="space-y-4">
-                            {state.payments.slice(-8).reverse().map(p => (
-                                <div key={p.id} className="p-5 border rounded-2xl bg-slate-50/50 flex justify-between items-center group hover:bg-white hover:shadow-lg transition-all">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center font-black">₹</div>
-                                        <div><p className="font-bold text-slate-800">{p.farmerName}</p><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{formatDate(p.timestamp)} | {p.mode}</p></div>
-                                    </div>
-                                    <div className="text-right"><p className="text-xl font-black text-rose-600">-{formatCurrency(p.amount)}</p><p className="text-[10px] font-black text-slate-300 uppercase">Paid Out</p></div>
-                                </div>
-                            ))}
-                            {state.payments.length === 0 && <div className="py-24 text-center text-slate-300 font-bold uppercase tracking-widest italic">No payments yet.</div>}
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        /**
-         * REMAINING SCREENS (SALES, INVENTORY, REPORTS, BACKUP, SETTINGS)
-         */
-        const SalesScreen = ({ state, setState, notify }) => {
-            const [form, setForm] = useState({ customer: '', qty: '', rate: '', date: new Date().toISOString().split('T')[0] });
-            const save = (e) => {
-                e.preventDefault();
-                const amt = Number(form.qty) * Number(form.rate);
-                setState(p => ({ ...p, sales: [...p.sales, { ...form, amount: amt, id: Date.now().toString() }] }));
-                notify("Sale Record Saved");
-                setForm({ customer: '', qty: '', rate: '', date: new Date().toISOString().split('T')[0] });
-            };
-            return (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card title="Commercial Milk Sale">
-                        <form onSubmit={save} className="space-y-4">
-                            <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Buyer Details</label><input required className="w-full p-4 bg-slate-50 border rounded-xl font-bold" value={form.customer} onChange={e => setForm({...form, customer: e.target.value})} /></div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Qty (L)</label><input type="number" required className="w-full p-4 border rounded-xl font-bold" value={form.qty} onChange={e => setForm({...form, qty: e.target.value})} /></div>
-                                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sale Price (₹/L)</label><input type="number" required className="w-full p-4 border rounded-xl font-bold" value={form.rate} onChange={e => setForm({...form, rate: e.target.value})} /></div>
-                            </div>
-                            <div className="p-6 bg-slate-900 text-white rounded-2xl flex justify-between items-center"><span className="font-bold opacity-60">Receivable</span><span className="text-2xl font-black">{formatCurrency(Number(form.qty||0)*Number(form.rate||0))}</span></div>
-                            <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-lg">LOG COMMERCIAL SALE</button>
-                        </form>
-                    </Card>
-                    <Card title="Export Log">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="text-[10px] font-black text-slate-400 uppercase border-b"><tr className="pb-4"><th className="pb-4">Buyer</th><th className="pb-4">Vol</th><th className="pb-4 text-right">Value</th></tr></thead>
-                                <tbody className="divide-y">{state.sales.map(s => <tr key={s.id} className="hover:bg-slate-50"><td className="py-4 font-bold">{s.customer}</td><td className="py-4">{s.qty} L</td><td className="py-4 text-right font-black text-green-600">{formatCurrency(s.amount)}</td></tr>)}</tbody>
-                            </table>
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        const InventoryScreen = ({ state, setState, notify }) => {
-            const [form, setForm] = useState({ item: 'Feed', type: 'Purchase', qty: '', rate: '', date: new Date().toISOString().split('T')[0] });
-            const save = (e) => { e.preventDefault(); setState(p => ({ ...p, inventory: [...p.inventory, { ...form, id: Date.now().toString() }] })); notify("Stock Updated"); };
-            const count = (item) => {
-                const rs = state.inventory.filter(r => r.item === item);
-                const in_ = rs.filter(r => r.type === 'Purchase').reduce((a,b)=>a+Number(b.qty),0);
-                const out = rs.filter(r => r.type === 'Sale').reduce((a,b)=>a+Number(b.qty),0);
-                return in_ - out;
-            };
-            return (
-                <div className="space-y-8">
-                    <div className="grid grid-cols-2 gap-6"><StatCard label="Feed Stock" value={`${count('Feed')} Bags`} iconName="box" color="amber"/><StatCard label="Ghee Stock" value={`${count('Ghee')} Kg`} iconName="archive" color="green"/></div>
-                    <Card title="Inventory Management">
-                        <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                            <div><label className="text-[10px] font-black text-slate-400 uppercase">Item</label><select className="w-full p-3 border rounded-xl font-bold" value={form.item} onChange={e => setForm({...form, item: e.target.value})}><option>Feed</option><option>Ghee</option></select></div>
-                            <div><label className="text-[10px] font-black text-slate-400 uppercase">Action</label><select className="w-full p-3 border rounded-xl font-bold" value={form.type} onChange={e => setForm({...form, type: e.target.value})}><option>Purchase</option><option>Sale</option></select></div>
-                            <div><label className="text-[10px] font-black text-slate-400 uppercase">Qty</label><input type="number" required className="w-full p-3 border rounded-xl font-bold" value={form.qty} onChange={e => setForm({...form, qty: e.target.value})} /></div>
-                            <button type="submit" className="py-4 bg-slate-900 text-white rounded-xl font-black uppercase text-xs tracking-widest">Update Stock</button>
-                        </form>
-                    </Card>
-                </div>
-            );
-        };
-
-        const ReportsScreen = ({ state }) => {
-            const stats = useMemo(() => {
-                const totalL = state.milkEntries.reduce((a,b)=>a+Number(b.qty),0);
-                const totalCost = state.milkEntries.reduce((a,b)=>a+Number(b.amount),0);
-                return { totalL, totalCost, avgRate: totalL > 0 ? (totalCost/totalL).toFixed(2) : 0 };
-            }, [state.milkEntries]);
-            return (
-                <div className="space-y-8 print:p-0">
-                    <div className="flex justify-between items-center print:hidden"><h2 className="text-3xl font-black tracking-tighter uppercase">Audit Reports</h2><button onClick={() => window.print()} className="px-6 py-4 bg-white border border-slate-200 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm">Export PDF</button></div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-slate-900 text-white p-10 rounded-3xl shadow-2xl"><p className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-2">Total Procurement</p><p className="text-4xl font-black tracking-tighter">{stats.totalL.toFixed(1)} <span className="text-sm font-bold opacity-50">LTRS</span></p></div>
-                        <div className="bg-blue-600 text-white p-10 rounded-3xl shadow-2xl"><p className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-2">Acquisition Cost</p><p className="text-4xl font-black tracking-tighter">{formatCurrency(stats.totalCost)}</p></div>
-                        <div className="bg-white border p-10 rounded-3xl shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Efficiency Index</p><p className="text-4xl font-black tracking-tighter text-slate-800">₹{stats.avgRate}<span className="text-xs">/L</span></p></div>
-                    </div>
-                    <Card title="Shift-wise Efficiency Analysis">
-                        <table className="w-full text-left">
-                            <thead className="border-b text-[10px] font-black text-slate-400 uppercase"><tr><th className="pb-4">Shift</th><th className="pb-4">Collections</th><th className="pb-4">Volume</th><th className="pb-4 text-right">Investment</th></tr></thead>
-                            <tbody className="divide-y">{['Morning', 'Evening'].map(s => {
-                                const entries = state.milkEntries.filter(e => e.shift === s);
-                                return <tr key={s}><td className="py-4 font-black">{s}</td><td className="py-4 font-bold text-slate-500">{entries.length} units</td><td className="py-4 font-black text-slate-700">{entries.reduce((a,b)=>a+Number(b.qty),0).toFixed(1)} L</td><td className="py-4 text-right font-black text-blue-600">{formatCurrency(entries.reduce((a,b)=>a+Number(b.amount),0))}</td></tr>;
-                            })}</tbody>
-                        </table>
-                    </Card>
-                </div>
-            );
-        };
-
-        const BackupScreen = ({ state, setState, notify }) => {
-            const backup = () => { localStorage.setItem(BACKUP_KEY, JSON.stringify(state)); setState(p => ({...p, settings: {...p.settings, lastBackup: new Date()}})); notify("Backup Secured Locally"); };
-            const restore = () => { const data = localStorage.getItem(BACKUP_KEY); if (data && confirm("Wipe current data and restore?")) { setState(JSON.parse(data)); notify("Restored"); } };
-            return (
-                <div className="max-w-2xl mx-auto space-y-8">
-                    <Card title="Disaster Recovery & Sync">
-                        <div className="space-y-8">
-                            <div className="flex items-center gap-6 bg-blue-50/50 p-8 rounded-3xl border-2 border-dashed border-blue-200">
-                                <Icon name="database" size={48} className="text-blue-600" />
-                                <div><p className="font-black text-xl uppercase tracking-tighter">Persistence Engine</p><p className="text-sm font-bold text-slate-400 italic">Latest snapshot: {state.settings.lastBackup ? formatDate(state.settings.lastBackup) : 'No snapshot found'}</p></div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <button onClick={backup} className="p-8 border-2 border-slate-100 rounded-3xl transition-all hover:border-blue-600 hover:bg-white hover:shadow-xl text-left"><p className="font-black text-blue-600 mb-1 uppercase text-xs">Snapshot State</p><p className="text-[10px] font-bold text-slate-400 uppercase">Creates an encrypted clone of all dairy records locally.</p></button>
-                                <button onClick={restore} className="p-8 border-2 border-slate-100 rounded-3xl transition-all hover:border-amber-600 hover:bg-white hover:shadow-xl text-left"><p className="font-black text-amber-600 mb-1 uppercase text-xs">Restore Clone</p><p className="text-[10px] font-bold text-slate-400 uppercase">Wipe existing records and reload from latest snapshot.</p></button>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        const SettingsScreen = ({ state, setState, notify }) => {
-            const [rates, setRates] = useState(state.rates);
-            const save = () => { setState(p => ({ ...p, rates })); notify("System Updated"); };
-            return (
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <Card title="Pricing Architecture">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                            <div className="space-y-6">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-2">Cow Milk Protocol</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-[10px] font-bold text-slate-500 uppercase">Base Rate</label><input type="number" className="w-full p-4 border rounded-xl font-black text-blue-600" value={rates.cow.base} onChange={e => setRates({...rates, cow: {...rates.cow, base: e.target.value}})} /></div>
-                                    <div><label className="text-[10px] font-bold text-slate-500 uppercase">Ref Fat</label><input type="number" className="w-full p-4 border rounded-xl font-black text-slate-600" value={rates.cow.fatRef} onChange={e => setRates({...rates, cow: {...rates.cow, fatRef: e.target.value}})} /></div>
-                                </div>
-                            </div>
-                            <div className="space-y-6">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-2">Buffalo Milk Protocol</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-[10px] font-bold text-slate-500 uppercase">Base Rate</label><input type="number" className="w-full p-4 border rounded-xl font-black text-blue-600" value={rates.buffalo.base} onChange={e => setRates({...rates, buffalo: {...rates.buffalo, base: e.target.value}})} /></div>
-                                    <div><label className="text-[10px] font-bold text-slate-500 uppercase">Ref Fat</label><input type="number" className="w-full p-4 border rounded-xl font-black text-slate-600" value={rates.buffalo.fatRef} onChange={e => setRates({...rates, buffalo: {...rates.buffalo, fatRef: e.target.value}})} /></div>
-                                </div>
-                            </div>
-                        </div>
-                        <button onClick={save} className="w-full mt-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-blue-100 uppercase tracking-tighter">Recalibrate System Rates</button>
-                    </Card>
-                    <div className="flex justify-between items-center p-8 bg-rose-50 border-2 border-rose-100 rounded-3xl"><div className="pr-12"><p className="font-black text-rose-800 uppercase tracking-tighter text-xl">Factory Reset</p><p className="text-sm font-bold text-rose-600 opacity-80 uppercase tracking-widest">Permanent erasure of all centers, farmers, and logs.</p></div><button onClick={() => { if(confirm("ABSOLUTE WIPE?")) { localStorage.clear(); window.location.reload(); } }} className="px-8 py-4 bg-rose-600 text-white rounded-xl font-black uppercase text-xs tracking-widest">Execute Wipe</button></div>
-                </div>
-            );
-        };
-
+        // Render the app
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+
+        // Initialize lucide icons after app renders
+        setTimeout(() => {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }, 100);
     </script>
 </body>
 </html>

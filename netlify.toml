@@ -1,9 +1,6 @@
 [build]
   publish = "dist"
-  command = "npm run build"
+  command = ""
 
 [build.environment]
   NODE_VERSION = "22"
-
-[[plugins]]
-  package = "@netlify/plugin-functions-core"
