@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title data-translate="Owner Peace-of-Mind Report">Owner Peace-of-Mind Report - MilkBook</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Theme Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136986",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111d21",
+                        "profit-green": "#10b981",
+                        "expense-red": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }.input-tile:focus-within {
+            border-color: #2563eb;
+            border-width: 3px;
+            background-color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.15), 0 8px 10px -6px rgba(37, 99, 235, 0.15);
+            z-index: 10;
+        }
+        .input-tile {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            background-color: #f6f7f8;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111617] antialiased">
+    <script>
+        // Redirect to main work screen immediately
+        window.location.href = 'main-work.html';
+    </script>
+
+    <footer class="print:hidden text-center py-4 text-slate-500 text-sm border-t bg-slate-50">
+        Designed by <span class="font-bold text-slate-700">signimus</span>
+    </footer>
+
+    <script src="dairy-manager.js"></script>
+    <script src="cycle-manager.js"></script>
+    <script src="translations.js"></script>
+    <script src="state.js"></script>
+    <script src="db.js"></script>
+    <script src="utils.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Update header information
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN');
+        
+        // Check authentication
+        const session = sessionStorage.getItem('milkbook_session');
+        if (!session) {
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        // Load state from localStorage
+        const STORAGE_KEY = 'milkbook_data';
+        const INITIAL_STATE = {
+            auth: { 
+                isAuthenticated: true, 
+                user: { name: 'Ramesh Kumar', mobile: '9876543210', role: 'owner' },
+                role: 'owner'
+            },
+            currentScreen: 'dashboard',
+            dairyInfo: { 
+                name: 'Gopal Dairy Shop', 
+                owner: 'Ramesh Kumar', 
+                mobile: '9876543210', 
+                address: '', 
+                rateType: 'Fat_SNF', 
+                language: 'EN' 
+            },
+            farmers: [],
+            milkEntries: [],
+            rates: {
+                cow: { base: 40, fatRef: 3.5, snfRef: 8.5 },
+                buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 }
+            },
+            payments: [],
+            sales: [],
+            inventory: [],
+            evidenceRecords: [], // For MilkLedger Transparent functionality
+            settings: { 
+                backupEnabled: true, 
+                lastBackup: null, 
+                printerName: 'Default',
+                syncState: 'QUARANTINED', // 'QUARANTINED' | 'SYNCED'
+                lastServerSync: null,
+                pendingRecords: 0,
+                lastSyncTime: null,
+                localRecordsToday: 0
+            }
+        };
+        
+        let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || JSON.stringify(INITIAL_STATE));
+        
+        // Ensure state structure is correct
+        if (!state.farmers) state.farmers = [];
+        if (!state.milkEntries) state.milkEntries = [];
+        if (!state.payments) state.payments = [];
+        if (!state.sales) state.sales = [];
+        if (!state.inventory) state.inventory = [];
+        if (!state.evidenceRecords) state.evidenceRecords = [];
+        if (!state.settings) state.settings = INITIAL_STATE.settings;
+        
+        // Update header info
+        document.getElementById('dairyName').textContent = state.dairyInfo?.name || 'Milk Collection Center';
+        document.getElementById('userName').textContent = state.auth?.user?.name || 'User';
+        document.getElementById('userInitial').textContent = (state.auth?.user?.name || 'U').charAt(0).toUpperCase();
+        document.getElementById('pendingCount').textContent = state.settings?.pendingRecords || 0;
+        
+        // Update dashboard metrics
+        function updateDashboardMetrics() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayEntries = state.milkEntries.filter(e => e.date === today);
+            const todaySales = state.sales.filter(s => s.date === today);
+            const todayPayments = state.payments.filter(p => p.date === today && p.type === 'Payment');
+
+            // Calculate today's milk volume
+            const totalVolume = todayEntries.reduce((sum, entry) => sum + parseFloat(entry.qty || 0), 0);
+            document.getElementById('todaysMilk').innerHTML = `${totalVolume.toFixed(1)} <span class="text-2xl font-medium text-slate-400">L</span>`;
+
+            // Calculate total sales
+            const totalSales = todaySales.reduce((sum, sale) => sum + parseFloat(sale.amount || 0), 0);
+            
+            // Calculate acquisition cost (total payments to farmers)
+            const totalAcquisition = todayEntries.reduce((sum, entry) => sum + parseFloat(entry.amount || 0), 0);
+            document.getElementById('acquisitionCost').textContent = `₹${totalAcquisition.toFixed(2)}`;
+            
+            // Calculate cost per liter
+            const costPerLiter = totalVolume > 0 ? totalAcquisition / totalVolume : 0;
+            document.getElementById('costPerLiter').textContent = `₹${costPerLiter.toFixed(2)}`;
+
+            // Calculate efficiency index (revenue per liter acquired)
+            const efficiencyIndex = totalVolume > 0 ? totalSales / totalVolume : 0;
+            document.getElementById('efficiencyIndex').innerHTML = `₹${efficiencyIndex.toFixed(2)}<span class="text-2xl font-medium text-slate-400">/L</span>`;
+
+            // Calculate active farmers
+            const activeFarmers = state.farmers.filter(f => f.active !== false).length;
+            document.getElementById('activeFarmers').textContent = activeFarmers;
+
+            // Calculate milk trend (compare with yesterday)
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            const yesterdayEntries = state.milkEntries.filter(e => e.date === yesterdayStr);
+            const yesterdayVolume = yesterdayEntries.reduce((sum, entry) => sum + parseFloat(entry.qty || 0), 0);
+
+            if (yesterdayVolume > 0) {
+                const trendPercent = ((totalVolume - yesterdayVolume) / yesterdayVolume) * 100;
+                document.getElementById('milkTrend').textContent = `${trendPercent >= 0 ? '+' : ''}${trendPercent.toFixed(1)}% vs yesterday`;
+            } else {
+                document.getElementById('milkTrend').textContent = '+100% vs yesterday';
+            }
+
+            // Update recent collections table
+            updateRecentCollections();
+            
+            // Update active farmers table
+            updateActiveFarmersList();
+        }
+        
+        // Update recent collections table
+        function updateRecentCollections() {
+            const recentCollections = document.getElementById('recentCollections');
+            if (recentCollections) {
+                recentCollections.innerHTML = '';
+                
+                const today = new Date().toISOString().split('T')[0];
+                const todayEntries = state.milkEntries.filter(e => e.date === today);
+                
+                if (todayEntries.length > 0) {
+                    todayEntries.slice(0, 10).forEach(entry => {
+                        const farmer = state.farmers.find(f => f.id === entry.farmerId);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 font-bold text-slate-500">${entry.date}</td>
+                            <td class="px-6 py-4 font-black">${farmer?.name || 'Unknown'}</td>
+                            <td class="px-6 py-4 font-bold text-slate-500">${entry.shift}</td>
+                            <td class="px-6 py-4 font-black">${entry.type}</td>
+                            <td class="px-6 py-4 font-black text-slate-700">${entry.qty} L</td>
+                            <td class="px-6 py-4 font-black text-amber-600">${entry.fat}%</td>
+                            <td class="px-6 py-4 text-right font-black text-blue-600">₹${entry.amount}</td>
+                        `;
+                        recentCollections.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colSpan="7" className="py-8 text-center text-slate-500">No collections recorded today</td>';
+                    recentCollections.appendChild(row);
+                }
+            }
+        }
+        
+        // Update active farmers table
+        function updateActiveFarmersList() {
+            const activeFarmersList = document.getElementById('activeFarmersList');
+            if (activeFarmersList) {
+                activeFarmersList.innerHTML = '';
+                
+                const activeFarmers = state.farmers.filter(f => f.active !== false);
+                
+                if (activeFarmers.length > 0) {
+                    activeFarmers.slice(0, 10).forEach(farmer => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 font-bold">${farmer.name}</td>
+                            <td class="px-6 py-4 font-bold text-slate-500">${farmer.mobile}</td>
+                            <td class="px-6 py-4 font-bold text-amber-600">${farmer.type || 'Cow'}</td>
+                            <td class="px-6 py-4 font-bold text-emerald-600">₹${farmer.advance || 0}</td>
+                            <td class="px-6 py-4 text-right">
+                                <button class="text-blue-600 font-bold hover:underline text-sm">View</button>
+                            </td>
+                        `;
+                        activeFarmersList.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colSpan="5" className="py-8 text-center text-slate-500">No farmers registered yet</td>';
+                    activeFarmersList.appendChild(row);
+                }
+            }
+        }
+        
+        // Initial updates
+        updateDashboardMetrics();
+        
+        // Update metrics every 30 seconds
+        setInterval(updateDashboardMetrics, 30000);
+    </script>
+</body>
+</html>

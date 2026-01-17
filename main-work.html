@@ -122,6 +122,13 @@
     <!-- Header -->
     <header class="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-[#dce3e5] dark:border-gray-800 bg-white dark:bg-background-dark px-6 py-4 shadow-sm">
         <div class="flex items-center gap-3">
+            <button
+                id="backButton"
+                onclick="goBack()"
+                class="size-10 bg-slate-100 flex items-center justify-center rounded-xl text-slate-700 shadow-lg shadow-slate-500/20 hover:bg-slate-200 transition-colors"
+            >
+                <span class="material-symbols-outlined text-2xl">arrow_back</span>
+            </button>
             <div class="size-10 bg-primary flex items-center justify-center rounded-xl text-white shadow-lg shadow-primary/30">
                 <span class="material-symbols-outlined text-2xl">water_drop</span>
             </div>
@@ -469,12 +476,40 @@
                 </div>
             </div>
 
-            <!-- Save Button -->
-            <div class="flex justify-center">
+            <!-- Undo, Hold, and Save Buttons -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                    id="undoLastEntryBtn"
+                    onclick="undoLastEntry()"
+                    class="py-6 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-3xl p-6 shadow-lg shadow-amber-600/20 transition-all transform hover:-translate-y-1 flex items-center justify-between group h-32"
+                >
+                    <div class="flex flex-col items-start">
+                        <span class="bg-amber-500/30 rounded-lg px-3 py-1 text-sm font-bold uppercase tracking-wider mb-2">UNDO</span>
+                        <span class="text-3xl font-bold uppercase tracking-wide">Last Entry</span>
+                    </div>
+                    <div class="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                        <span class="material-symbols-outlined text-5xl">undo</span>
+                    </div>
+                </button>
+
+                <button
+                    id="holdEntryBtn"
+                    onclick="holdCurrentEntry()"
+                    class="py-6 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white rounded-3xl p-6 shadow-lg shadow-slate-600/20 transition-all transform hover:-translate-y-1 flex items-center justify-between group h-32"
+                >
+                    <div class="flex flex-col items-start">
+                        <span class="bg-slate-500/30 rounded-lg px-3 py-1 text-sm font-bold uppercase tracking-wider mb-2">HOLD</span>
+                        <span class="text-3xl font-bold uppercase tracking-wide">Entry</span>
+                    </div>
+                    <div class="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                        <span class="material-symbols-outlined text-5xl">pause_circle</span>
+                    </div>
+                </button>
+
                 <button
                     id="saveEntryBtn"
                     onclick="saveMilkEntry()"
-                    class="w-full max-w-md py-6 bg-primary hover:bg-primary/90 active:bg-primary/80 text-white rounded-3xl p-6 shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-1 flex items-center justify-between group h-32"
+                    class="py-6 bg-primary hover:bg-primary/90 active:bg-primary/80 text-white rounded-3xl p-6 shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-1 flex items-center justify-between group h-32"
                 >
                     <div class="flex flex-col items-start">
                         <span class="bg-primary/30 rounded-lg px-3 py-1 text-sm font-bold uppercase tracking-wider mb-2">SAVE</span>
@@ -884,6 +919,148 @@
                 }
             } else {
                 alert('Invalid PIN. Correction not authorized.');
+            }
+        }
+
+        // Function to undo last entry
+        function undoLastEntry() {
+            if (state.milkEntries && state.milkEntries.length > 0) {
+                // Get the last entry
+                const lastEntry = state.milkEntries[state.milkEntries.length - 1];
+
+                // Confirm with user
+                const confirmed = confirm(`Last entry:\nFarmer: ${getFarmerName(lastEntry.farmerId)}\nQuantity: ${lastEntry.qty}L\nAmount: ₹${lastEntry.amount}\n\nUndo this entry?`);
+
+                if (confirmed) {
+                    // Create a correction entry to reverse the last entry
+                    const correctionEntry = {
+                        id: Date.now().toString() + '_correction',
+                        originalEntryId: lastEntry.id,
+                        farmerId: lastEntry.farmerId,
+                        date: new Date().toISOString().split('T')[0],
+                        shift: lastEntry.shift,
+                        type: lastEntry.type,
+                        qty: -Math.abs(lastEntry.qty), // Negative quantity
+                        fat: lastEntry.fat,
+                        snf: lastEntry.snf,
+                        rate: lastEntry.rate,
+                        amount: -Math.abs(parseFloat(lastEntry.amount)), // Negative amount
+                        reason: 'Undo last entry',
+                        syncState: 'QUARANTINED',
+                        createdAtLocal: new Date().toISOString(),
+                        syncedAtServer: null,
+                        isManual: true,
+                        inputSource: 'undo',
+                        deviceId: navigator.userAgent,
+                        operatorId: state.auth?.user?.id || 'current_user',
+                        entryType: 'correction'
+                    };
+
+                    // Add to state
+                    state.milkEntries.push(correctionEntry);
+                    state.settings.pendingRecords = (state.settings.pendingRecords || 0) + 1;
+
+                    // Save to localStorage
+                    localStorage.setItem('milkbook_data', JSON.stringify(state));
+
+                    alert('Last entry undone successfully!');
+
+                    // Play undo sound
+                    playUndoSound();
+                }
+            } else {
+                alert('No entries to undo');
+            }
+        }
+
+        // Function to play undo sound
+        function playUndoSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 523.25; // C5 note
+                gainNode.gain.value = 0.3;
+
+                oscillator.start();
+                setTimeout(() => {
+                    oscillator.stop();
+                }, 150);
+            } catch (e) {
+                console.log("Could not play sound:", e);
+            }
+        }
+
+        // Function to get farmer name by ID
+        function getFarmerName(farmerId) {
+            const farmer = state.farmers.find(f => f.id === farmerId);
+            return farmer ? farmer.name : 'Unknown Farmer';
+        }
+
+        // Function to go back to previous page
+        function goBack() {
+            // For now, go back to dashboard
+            // In a real implementation, this would navigate to the previous page in the user's flow
+            window.history.back();
+        }
+
+        // Function to hold current entry (save as draft)
+        function holdCurrentEntry() {
+            // Get current form values
+            const formData = {
+                farmerId: document.getElementById('farmerSelect').value,
+                date: document.getElementById('dateInput').value,
+                shift: document.getElementById('shiftSelect').value,
+                type: document.getElementById('typeSelect').value,
+                qty: parseFloat(document.getElementById('quantityInput').value) || 0,
+                fat: parseFloat(document.getElementById('fatInput').value) || 0,
+                snf: parseFloat(document.getElementById('snfInput').value) || 0,
+                rate: parseFloat(document.getElementById('rateInput').value) || 0,
+                amount: parseFloat(document.getElementById('amountInput').value) || 0,
+                heldAt: new Date().toISOString()
+            };
+
+            // Save to localStorage as draft
+            localStorage.setItem('milkbook_draft_entry', JSON.stringify(formData));
+            alert('Entry saved as draft. You can resume later.');
+        }
+
+        // Function to resume held entry
+        function resumeHeldEntry() {
+            const draftData = localStorage.getItem('milkbook_draft_entry');
+            if (draftData) {
+                try {
+                    const formData = JSON.parse(draftData);
+
+                    // Populate form with draft data
+                    document.getElementById('farmerSelect').value = formData.farmerId;
+                    document.getElementById('dateInput').value = formData.date;
+                    document.getElementById('shiftSelect').value = formData.shift;
+                    document.getElementById('typeSelect').value = formData.type;
+                    document.getElementById('quantityInput').value = formData.qty;
+                    document.getElementById('fatInput').value = formData.fat;
+                    document.getElementById('snfInput').value = formData.snf;
+                    document.getElementById('rateInput').value = formData.rate;
+                    document.getElementById('amountInput').value = formData.amount;
+
+                    // Update farmer details
+                    updateFarmerDetails(formData.farmerId);
+
+                    // Clear draft
+                    localStorage.removeItem('milkbook_draft_entry');
+
+                    alert('Draft entry resumed.');
+                } catch (e) {
+                    console.error('Error resuming draft:', e);
+                    alert('Error resuming draft entry.');
+                }
+            } else {
+                alert('No draft entry found.');
             }
         }
 

@@ -205,6 +205,10 @@
                         <span class="material-symbols-outlined">print</span>
                         Print Passbook
                     </button>
+                    <button id="correctionModeBtn" class="px-6 py-3 bg-amber-600 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-amber/20 hover:bg-amber-700 transition-colors" data-correction-mode="false">
+                        <span class="material-symbols-outlined">build</span>
+                        Galti Sudhaare
+                    </button>
                 </div>
             </div>
 
@@ -582,9 +586,9 @@
                 const date = new Date(entry.date);
                 const day = date.getDate().toString().padStart(2, '0');
                 const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                
+
                 html += `
-                    <div class="passbook-entry ${entry.type}">
+                    <div class="passbook-entry ${entry.type} group">
                         <div class="date-marker">${day}<br/>${month}</div>
                         <div class="flex justify-between items-start">
                             <div>
@@ -598,8 +602,19 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-2 pt-2 border-t border-slate-100 text-right">
+                        <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
                             <div class="text-sm">Balance: <span class="font-bold">₹${entry.balance.toFixed(2)}</span></div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="editEntry('${entry.id}')" class="text-blue-600 hover:text-blue-800 p-1" title="Edit Entry">
+                                    <span class="material-symbols-outlined text-sm">edit</span>
+                                </button>
+                                <button onclick="deleteEntry('${entry.id}')" class="text-red-600 hover:text-red-800 p-1" title="Delete Entry">
+                                    <span class="material-symbols-outlined text-sm">delete</span>
+                                </button>
+                                <button onclick="createCorrectionEntry('${entry.id}')" class="text-amber-600 hover:text-amber-800 p-1" title="Correction Entry">
+                                    <span class="material-symbols-outlined text-sm">edit_square</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -628,6 +643,61 @@
             const date = new Date(dateString);
             return date.toLocaleDateString('en-IN');
         }
+
+        // Edit entry function
+        function editEntry(entryId) {
+            // In a real implementation, this would open an edit form
+            // For now, we'll show an alert
+            alert('Edit functionality for entry: ' + entryId + '\n\nThis would open an edit form in a real implementation.');
+        }
+
+        // Delete entry function
+        function deleteEntry(entryId) {
+            if (confirm('Are you sure you want to delete this entry?\n\nThis action cannot be undone.')) {
+                // In a real implementation, this would create a correction entry
+                // For now, we'll show an alert
+                alert('Delete functionality for entry: ' + entryId + '\n\nThis would create a correction entry in a real implementation.');
+            }
+        }
+
+        // Create correction entry function
+        function createCorrectionEntry(entryId) {
+            // Show a prompt for correction reason
+            const reason = prompt('Enter correction reason:');
+            if (reason && reason.trim() !== '') {
+                // In a real implementation, this would create a correction entry
+                // For now, we'll show an alert
+                alert('Correction entry created for: ' + entryId + '\n\nReason: ' + reason);
+            }
+        }
+
+        // Correction mode toggle
+        function toggleCorrectionMode() {
+            const correctionBtn = document.getElementById('correctionModeBtn');
+            const correctionMode = correctionBtn.getAttribute('data-correction-mode') === 'true';
+
+            if (correctionMode) {
+                // Exit correction mode
+                correctionBtn.innerHTML = '<span class="material-symbols-outlined text-xs">build</span> Galti Sudhaare';
+                correctionBtn.setAttribute('data-correction-mode', 'false');
+                correctionBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                correctionBtn.classList.add('bg-amber-600', 'hover:bg-amber-700');
+            } else {
+                // Enter correction mode
+                correctionBtn.innerHTML = '<span class="material-symbols-outlined text-xs">close</span> Exit Correction';
+                correctionBtn.setAttribute('data-correction-mode', 'true');
+                correctionBtn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+                correctionBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            }
+        }
+
+        // Add event listener to correction mode button when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const correctionBtn = document.getElementById('correctionModeBtn');
+            if (correctionBtn) {
+                correctionBtn.addEventListener('click', toggleCorrectionMode);
+            }
+        });
         
         // Function to focus next field
         function focusNextField(currentFieldId, nextFieldId) {

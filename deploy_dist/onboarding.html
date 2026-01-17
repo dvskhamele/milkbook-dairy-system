@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Welcome - MilkBook</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2563eb",
+                        "primary-hover": "#1d4ed8",
+                        "background-main": "#f8fafc","surface-white": "#ffffff",
+                        "text-main": "#1e293b","text-secondary": "#64748b",
+                        "border-subtle": "#e2e8f0",
+                        "border-focus": "#2563eb",
+                        "success-green": "#10b981",
+                        "danger-red": "#ef4444",
+                        "warning-amber": "#f59e0b",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    boxShadow: {
+                        "soft": "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+                        "tile": "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)",
+                        "tile-hover": "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)",
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .input-tile:focus-within {
+            border-color: #2563eb;
+            border-width: 3px;
+            background-color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.15), 0 8px 10px -6px rgba(37, 99, 235, 0.15);
+            z-index: 10;
+        }
+        .input-tile {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        /* Onboarding specific styles */
+        .onboarding-step {
+            display: none;
+        }
+        
+        .onboarding-step.active {
+            display: block;
+        }
+        
+        .onboarding-progress {
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .onboarding-progress-bar {
+            height: 100%;
+            background-color: #2563eb;
+            transition: width 0.3s ease;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+        
+        .success-animation {
+            animation: success 0.5s ease-in-out;
+        }
+        
+        @keyframes success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-background-main font-display h-screen flex flex-col overflow-hidden text-text-main selection:bg-primary/20 selection:text-primary">
+    <div class="flex-1 flex flex-col">
+        <!-- Onboarding Header -->
+        <header class="sticky top-0 z-10 flex items-center justify-between border-b border-solid border-[#dce3e5] dark:border-gray-800 bg-white dark:bg-background-dark px-6 py-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="size-10 bg-primary flex items-center justify-center rounded-xl text-white shadow-lg shadow-primary/30">
+                    <span class="material-symbols-outlined text-2xl">water_drop</span>
+                </div>
+                <h2 class="text-xl font-extrabold tracking-tight">MilkBook</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="onboarding-progress w-32">
+                    <div class="onboarding-progress-bar" id="progressBar" style="width: 0%"></div>
+                </div>
+                <span class="text-sm font-bold text-slate-500" id="stepCounter">Step 0 of 6</span>
+            </div>
+        </header>
+
+        <!-- Onboarding Content -->
+        <main class="flex-1 overflow-y-auto p-8 flex items-center justify-center">
+            <div class="max-w-2xl w-full">
+                <!-- Step 0: Role Selection -->
+                <div id="step0" class="onboarding-step active text-center">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-4">Aap kaun ho?</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Apne role ko chunein</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="role-option bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-all transform hover:scale-105 pulse-animation" onclick="selectRole('owner')">
+                            <div class="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-4xl text-white">storefront</span>
+                            </div>
+                            <span class="text-xl font-bold text-center text-blue-800 dark:text-blue-200">Dairy Malik</span>
+                        </div>
+                        
+                        <div class="role-option bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-all transform hover:scale-105" onclick="selectRole('labour')">
+                            <div class="w-20 h-20 rounded-full bg-amber-500 flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-4xl text-white">engineering</span>
+                            </div>
+                            <span class="text-xl font-bold text-center text-amber-800 dark:text-amber-200">Madadgar</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 1: Welcome -->
+                <div id="step1" class="onboarding-step text-center">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-4">MilkBook aapka khata-kitab sambhalega</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Aaj hum sirf 3 cheez karenge</p>
+                    </div>
+                    
+                    <div class="space-y-6 mb-8">
+                        <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
+                            <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-white">person_add</span>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-lg">Ek kisaan add</h3>
+                                <p class="text-slate-500">Pehla kisaan register karein</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
+                            <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-white">water_drop</span>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-lg">Ek doodh entry</h3>
+                                <p class="text-slate-500">Pehla doodh entry karein</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
+                            <div class="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-white">payments</span>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-lg">Paisa ka hisaab</h3>
+                                <p class="text-slate-500">Paisa ka hisaab dekhenge</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="startBtn" onclick="goToStep(2)" class="px-8 py-4 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-colors disabled:opacity-50" disabled>
+                        Shuru karein
+                    </button>
+                </div>
+                
+                <!-- Step 2: Add Farmer -->
+                <div id="step2" class="onboarding-step">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-2">Kisaan Pehchaan</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Pehla kisaan register karein</p>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">badge</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">1</span>
+                                <input
+                                    id="farmerNumber"
+                                    type="number"
+                                    required
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    placeholder="000"
+                                    inputmode="numeric"
+                                    oninput="validateFarmerNumber()"
+                                />
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <button
+                                    type="button"
+                                    class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                                    onclick="focusNextField('farmerNumber', 'farmerName')"
+                                >
+                                    <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">person</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">2</span>
+                                <input
+                                    id="farmerName"
+                                    type="text"
+                                    required
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    placeholder="Ram Singh"
+                                    oninput="validateFarmerName()"
+                                />
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <button
+                                    type="button"
+                                    class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                                    onclick="focusNextField('farmerName', 'farmerVillage')"
+                                >
+                                    <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">location_on</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">3</span>
+                                <input
+                                    id="farmerVillage"
+                                    type="text"
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    placeholder="Village Name"
+                                />
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <button
+                                    type="button"
+                                    class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                                    onclick="focusNextField('farmerVillage', 'nextStep2')"
+                                >
+                                    <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center">
+                        <button id="nextStep2" onclick="goToStep(3)" class="px-8 py-4 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-colors disabled:opacity-50" disabled>
+                            Agla Padhar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Rate Explanation -->
+                <div id="step3" class="onboarding-step text-center">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-4">Paisa ka hisaab kaise hota hai?</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Doodh ka daam kaise calculate hota hai</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="rate-option bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-all" onclick="selectRateType('Fat_SNF')">
+                            <div class="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-3xl text-white">bolt</span>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Fat ke hisaab se</h3>
+                            <p class="text-slate-500 text-sm">Fat aur SNF ke hisaab se daam calculate hota hai</p>
+                        </div>
+                        
+                        <div class="rate-option bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-2xl p-6 cursor-pointer hover:bg-green-200 dark:hover:bg-green-800/50 transition-all" onclick="selectRateType('Litre')">
+                            <div class="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-3xl text-white">format_list_numbered</span>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Sirf litre ke hisaab se</h3>
+                            <p class="text-slate-500 text-sm">Har litre ka fix daam hota hai</p>
+                        </div>
+                    </div>
+                    
+                    <button id="nextStep3" onclick="goToStep(4)" class="px-8 py-4 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-colors disabled:opacity-50" disabled>
+                        Agla Padhar
+                    </button>
+                </div>
+                
+                <!-- Step 4: Previous Balance -->
+                <div id="step4" class="onboarding-step text-center">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-4">Pehle se paisa?</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Kya pehle se paisa lena ya dena hai?</p>
+                    </div>
+                    
+                    <div class="flex justify-center mb-8">
+                        <div class="flex items-center gap-6">
+                            <div class="flex items-center">
+                                <input type="radio" id="balanceYes" name="previousBalance" value="yes" class="w-6 h-6 text-primary focus:ring-primary" onchange="toggleBalanceInput()">
+                                <label for="balanceYes" class="ml-3 text-xl font-bold">Haan</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" id="balanceNo" name="previousBalance" value="no" class="w-6 h-6 text-primary focus:ring-primary" onchange="toggleBalanceInput()" checked>
+                                <label for="balanceNo" class="ml-3 text-xl font-bold">Nahi</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="balanceInput" class="mb-8 hidden">
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">payments</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">1</span>
+                                <input
+                                    id="balanceAmount"
+                                    type="number"
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    placeholder="0"
+                                    inputmode="decimal"
+                                />
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <span class="material-symbols-outlined text-4xl text-slate-400">rupee</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 mt-2">Agar lena hai to positive number, dena hai to negative (-) number</p>
+                    </div>
+                    
+                    <button onclick="finishFarmerSetup()" class="px-8 py-4 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-colors">
+                        Kisaan Tayar
+                    </button>
+                </div>
+                
+                <!-- Step 5: First Milk Entry -->
+                <div id="step5" class="onboarding-step text-center">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-4">Pehla Doodh Entry</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Ab ek doodh entry karein</p>
+                    </div>
+                    
+                    <div class="mb-8 text-left max-w-md mx-auto">
+                        <div class="bg-slate-50 p-4 rounded-xl mb-4">
+                            <p class="font-bold">Selected Kisaan:</p>
+                            <p id="selectedFarmerDisplay" class="text-lg">Ram Singh (001)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">format_list_numbered</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">1</span>
+                                <input
+                                    id="milkQty"
+                                    type="number"
+                                    step="0.01"
+                                    required
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    placeholder="00.0"
+                                    inputmode="decimal"
+                                    oninput="calculateLiveAmount()"
+                                />
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <span class="text-4xl font-bold text-slate-400">L</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">bolt</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">2</span>
+                                <input
+                                    id="milkFat"
+                                    type="number"
+                                    step="0.01"
+                                    required
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    placeholder="0.0"
+                                    inputmode="decimal"
+                                    oninput="calculateLiveAmount()"
+                                />
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <span class="text-4xl font-bold text-slate-400">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="liveCalculation" class="mb-8 hidden">
+                        <div class="bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-2xl p-6 text-center">
+                            <div class="text-sm font-bold uppercase tracking-widest text-green-800 dark:text-green-200">Live Calculation</div>
+                            <div class="text-4xl font-bold text-green-700 dark:text-green-100 mt-2" id="calculationDisplay">0 L × Fat 0.0 = ₹0</div>
+                        </div>
+                    </div>
+                    
+                    <button id="saveMilkBtn" onclick="saveFirstMilkEntry()" class="px-8 py-4 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-colors disabled:opacity-50" disabled>
+                        Entry Save Karein
+                    </button>
+                </div>
+                
+                <!-- Step 6: Show Account -->
+                <div id="step6" class="onboarding-step text-center">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-4">Yahin se paisa ka hisaab dikhega</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Kisaan ka khata dekhein</p>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-6 rounded-2xl mb-8 text-left">
+                        <div class="flex justify-between items-center mb-4 pb-4 border-b">
+                            <div>
+                                <h3 class="font-bold text-xl">Ram Singh</h3>
+                                <p class="text-slate-500">Aaj ka doodh: 10.0 L</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-green-600">₹820</p>
+                                <p class="text-slate-500 text-sm">Total</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="font-bold">Aaj ka doodh</p>
+                                    <p class="text-slate-500 text-sm">10.0 L @ ₹82/L</p>
+                                </div>
+                                <p class="font-bold text-green-600">₹820</p>
+                            </div>
+                            
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="font-bold">Pichle hisaab</p>
+                                    <p class="text-slate-500 text-sm">Agli baar dena</p>
+                                </div>
+                                <p class="font-bold text-amber-600">-₹50</p>
+                            </div>
+                            
+                            <div class="flex justify-between pt-4 border-t font-black text-lg">
+                                <p>Balance</p>
+                                <p class="text-green-600">₹770</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="goToStep(7)" class="px-8 py-4 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-colors">
+                        Galati Fix Karein
+                    </button>
+                </div>
+                
+                <!-- Step 7: Error Correction -->
+                <div id="step7" class="onboarding-step text-center">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-4">Agar galati ho jaye?</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Galati ko kaise sudharenge</p>
+                    </div>
+                    
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-8 text-left">
+                        <p class="font-bold text-amber-800 mb-2">Yaad rakhein:</p>
+                        <ul class="list-disc pl-5 space-y-2 text-amber-700">
+                            <li>Purani entry kabhi nahi badalti</li>
+                            <li>Sudhaar ek alg entry hoti hai</li>
+                            <li>Minus (-) amount se purane entry ka balance adjust hota hai</li>
+                            <li>Har entry permanent hoti hai</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-red-50 border border-red-200 rounded-2xl p-6">
+                            <h3 class="font-bold text-red-800 mb-2">Galti Entry</h3>
+                            <p class="text-red-700">10L doodh → ₹820</p>
+                        </div>
+                        
+                        <div class="bg-green-50 border border-green-200 rounded-2xl p-6">
+                            <h3 class="font-bold text-green-800 mb-2">Sudhaar Entry</h3>
+                            <p class="text-green-700">-1L doodh → -₹82</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="goToStep(8)" class="px-8 py-4 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-colors">
+                        Daily Kaam Samjhaye
+                    </button>
+                </div>
+                
+                <!-- Step 8: Daily Use -->
+                <div id="step8" class="onboarding-step text-center">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-black tracking-tight uppercase text-primary mb-4">Daily Kaam Kaise?</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400">Subah aur shaam ka kaam</p>
+                    </div>
+                    
+                    <div class="space-y-6 mb-8">
+                        <div class="p-6 bg-blue-50 rounded-2xl text-left">
+                            <h3 class="font-bold text-blue-800 text-xl mb-3">🌅 Subah / Shaam ka kaam</h3>
+                            <ul class="list-disc pl-5 space-y-2 text-blue-700">
+                                <li>App kholna</li>
+                                <li>Doodh entry karna</li>
+                                <li>Green tick dekhna</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="p-6 bg-green-50 rounded-2xl text-left">
+                            <h3 class="font-bold text-green-800 text-xl mb-3">🌙 Baad ka kaam</h3>
+                            <ul class="list-disc pl-5 space-y-2 text-green-700">
+                                <li>Khata dekhna</li>
+                                <li>Paisa dena / lena</li>
+                                <li>Report bhejna</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <button onclick="finishOnboarding()" class="px-8 py-4 bg-success-green text-white rounded-2xl font-black text-lg hover:bg-green-700 transition-colors">
+                        Ab Kaam Shuru Karein!
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="dairy-manager.js"></script>
+    <script src="cycle-manager.js"></script>
+    <script src="translations.js"></script>
+    <script src="state.js"></script>
+    <script src="db.js"></script>
+    <script src="utils.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Onboarding state
+        let currentStep = 0;
+        let userRole = null;
+        let rateType = null;
+        let firstFarmer = null;
+        let firstEntry = null;
+
+        // Initialize onboarding
+        function initOnboarding() {
+            // Check if onboarding is already completed
+            const onboardingCompleted = localStorage.getItem('onboarding_completed');
+            if (onboardingCompleted === 'true') {
+                // Skip onboarding and go to main work screen
+                window.location.href = 'main-work.html';
+                return;
+            }
+            
+            updateProgressBar();
+        }
+
+        // Navigate to step
+        function goToStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.onboarding-step').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show current step
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            currentStep = step;
+            updateProgressBar();
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const totalSteps = 8; // 0-8
+            const progressPercent = (currentStep / totalSteps) * 100;
+            
+            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+            document.getElementById('stepCounter').textContent = `Step ${currentStep} of ${totalSteps}`;
+        }
+
+        // Select user role
+        function selectRole(role) {
+            userRole = role;
+            
+            // Highlight selected option
+            document.querySelectorAll('.role-option').forEach(el => {
+                el.classList.remove('pulse-animation');
+            });
+            
+            // Move to next step after a delay
+            setTimeout(() => {
+                goToStep(1);
+            }, 500);
+        }
+
+        // Validate farmer number
+        function validateFarmerNumber() {
+            const number = document.getElementById('farmerNumber').value;
+            const nextBtn = document.getElementById('nextStep2');
+            
+            if (number && number.length >= 3) {
+                nextBtn.disabled = false;
+            } else {
+                nextBtn.disabled = true;
+            }
+        }
+
+        // Validate farmer name
+        function validateFarmerName() {
+            const name = document.getElementById('farmerName').value;
+            const nextBtn = document.getElementById('nextStep2');
+            
+            if (name && name.trim().length >= 2) {
+                nextBtn.disabled = false;
+            } else {
+                nextBtn.disabled = true;
+            }
+        }
+
+        // Focus next field
+        function focusNextField(currentFieldId, nextFieldId) {
+            const currentField = document.getElementById(currentFieldId);
+            const nextField = document.getElementById(nextFieldId);
+
+            if (nextField) {
+                nextField.focus();
+                if (nextField.select) nextField.select();
+            }
+        }
+
+        // Select rate type
+        function selectRateType(type) {
+            rateType = type;
+            
+            // Highlight selected option
+            document.querySelectorAll('.rate-option').forEach(el => {
+                el.classList.remove('ring-4', 'ring-primary', 'ring-offset-2');
+            });
+            
+            event.target.closest('.rate-option').classList.add('ring-4', 'ring-primary', 'ring-offset-2');
+            
+            // Enable next button
+            document.getElementById('nextStep3').disabled = false;
+        }
+
+        // Toggle balance input
+        function toggleBalanceInput() {
+            const balanceYes = document.getElementById('balanceYes').checked;
+            const balanceInput = document.getElementById('balanceInput');
+            
+            if (balanceYes) {
+                balanceInput.classList.remove('hidden');
+            } else {
+                balanceInput.classList.add('hidden');
+                document.getElementById('balanceAmount').value = '';
+            }
+        }
+
+        // Finish farmer setup
+        async function finishFarmerSetup() {
+            const farmerNumber = document.getElementById('farmerNumber').value;
+            const farmerName = document.getElementById('farmerName').value;
+            const farmerVillage = document.getElementById('farmerVillage').value;
+            const hasPreviousBalance = document.getElementById('balanceYes').checked;
+            const balanceAmount = hasPreviousBalance ? parseFloat(document.getElementById('balanceAmount').value) || 0 : 0;
+
+            // Create farmer object
+            firstFarmer = {
+                id: `farmer_${Date.now()}`,
+                number: farmerNumber,
+                name: farmerName,
+                village: farmerVillage,
+                active: true,
+                type: 'Cow', // Default type
+                syncState: 'QUARANTINED',
+                createdAtLocal: new Date().toISOString(),
+                syncedAtServer: null,
+                isManual: true,
+                inputSource: 'onboarding',
+                deviceId: navigator.userAgent,
+                operatorId: 'onboarding_user'
+            };
+
+            // If there's a previous balance, create an adjustment entry
+            if (balanceAmount !== 0) {
+                // Would create an adjustment entry here if needed
+            }
+
+            // Save farmer to IndexedDB
+            try {
+                await addData('farmers', firstFarmer);
+                
+                // Update local state
+                const STORAGE_KEY = 'milkbook_data';
+                let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || JSON.stringify({
+                    auth: { isAuthenticated: true, user: { name: 'Onboarding User', mobile: '0000000000', role: userRole }, role: userRole },
+                    dairyInfo: { name: 'My Dairy Shop', owner: 'Onboarding User', mobile: '0000000000', address: '', rateType: rateType, language: 'EN' },
+                    farmers: [],
+                    milkEntries: [],
+                    rates: { cow: { base: 40, fatRef: 3.5, snfRef: 8.5 }, buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 } },
+                    payments: [],
+                    sales: [],
+                    inventory: [],
+                    evidenceRecords: [],
+                    settings: { backupEnabled: true, lastBackup: null, printerName: 'Default', syncState: 'QUARANTINED', lastServerSync: null, pendingRecords: 0, lastSyncTime: null, localRecordsToday: 0 }
+                }));
+                
+                state.farmers.push(firstFarmer);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                
+                goToStep(5);
+            } catch (error) {
+                console.error('Error saving farmer:', error);
+                alert('Error saving farmer: ' + error.message);
+            }
+        }
+
+        // Calculate live amount
+        function calculateLiveAmount() {
+            const qty = parseFloat(document.getElementById('milkQty').value) || 0;
+            const fat = parseFloat(document.getElementById('milkFat').value) || 0;
+            const saveBtn = document.getElementById('saveMilkBtn');
+            
+            if (qty > 0 && fat > 0) {
+                // Calculate amount based on rate type
+                const calc = calculateMilkAmount(qty, fat, 0, rateType, 
+                    { cow: { base: 40, fatRef: 3.5, snfRef: 8.5 }, buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 } }, 
+                    'Cow');
+                
+                document.getElementById('calculationDisplay').textContent = `${qty} L × Fat ${fat} = ₹${calc.amount}`;
+                document.getElementById('liveCalculation').classList.remove('hidden');
+                
+                saveBtn.disabled = false;
+            } else {
+                document.getElementById('liveCalculation').classList.add('hidden');
+                saveBtn.disabled = true;
+            }
+        }
+
+        // Save first milk entry
+        async function saveFirstMilkEntry() {
+            const qty = parseFloat(document.getElementById('milkQty').value) || 0;
+            const fat = parseFloat(document.getElementById('milkFat').value) || 0;
+
+            if (qty <= 0 || fat <= 0) {
+                alert('Please enter valid quantity and fat values');
+                return;
+            }
+
+            // Calculate amount
+            const calc = calculateMilkAmount(qty, fat, 0, rateType, 
+                { cow: { base: 40, fatRef: 3.5, snfRef: 8.5 }, buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 } }, 
+                'Cow');
+
+            // Create milk entry
+            firstEntry = {
+                id: `entry_${Date.now()}`,
+                farmerId: firstFarmer.id,
+                date: new Date().toISOString().split('T')[0],
+                shift: new Date().getHours() < 12 ? 'Morning' : 'Evening',
+                type: 'Cow',
+                qty: qty,
+                fat: fat,
+                snf: 0,
+                rate: parseFloat(calc.rate),
+                amount: parseFloat(calc.amount),
+                syncState: 'QUARANTINED',
+                createdAtLocal: new Date().toISOString(),
+                syncedAtServer: null,
+                isManual: true,
+                inputSource: 'onboarding',
+                deviceId: navigator.userAgent,
+                operatorId: 'onboarding_user'
+            };
+
+            // Save to IndexedDB
+            try {
+                await addData('milk_collections', firstEntry);
+                
+                // Update local state
+                const STORAGE_KEY = 'milkbook_data';
+                let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || JSON.stringify({
+                    auth: { isAuthenticated: true, user: { name: 'Onboarding User', mobile: '0000000000', role: userRole }, role: userRole },
+                    dairyInfo: { name: 'My Dairy Shop', owner: 'Onboarding User', mobile: '0000000000', address: '', rateType: rateType, language: 'EN' },
+                    farmers: [firstFarmer],
+                    milkEntries: [],
+                    rates: { cow: { base: 40, fatRef: 3.5, snfRef: 8.5 }, buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 } },
+                    payments: [],
+                    sales: [],
+                    inventory: [],
+                    evidenceRecords: [],
+                    settings: { backupEnabled: true, lastBackup: null, printerName: 'Default', syncState: 'QUARANTINED', lastServerSync: null, pendingRecords: 0, lastSyncTime: null, localRecordsToday: 0 }
+                }));
+                
+                state.milkEntries.push(firstEntry);
+                state.settings.pendingRecords = (state.settings.pendingRecords || 0) + 1;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                
+                // Show success and move to next step
+                document.getElementById('selectedFarmerDisplay').textContent = `${firstFarmer.name} (${firstFarmer.number})`;
+                goToStep(6);
+            } catch (error) {
+                console.error('Error saving milk entry:', error);
+                alert('Error saving milk entry: ' + error.message);
+            }
+        }
+
+        // Finish onboarding
+        function finishOnboarding() {
+            // Mark onboarding as completed
+            localStorage.setItem('onboarding_completed', 'true');
+            
+            // Redirect to main work screen
+            window.location.href = 'main-work.html';
+        }
+
+        // Initialize onboarding when page loads
+        window.addEventListener('DOMContentLoaded', initOnboarding);
+    </script>
+</body>
+</html>

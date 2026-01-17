@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disaster Recovery - MilkBook</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body class="bg-slate-50">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+                <div class="bg-blue-600 p-2 rounded-lg">
+                    <img src="icons/milkcan.jpg" alt="MilkCan" style="width: 20px; height: 20px;" class="text-white">
+                </div>
+                <span class="font-bold text-xl uppercase tracking-tighter">MilkBook</span>
+            </div>
+            <nav class="flex-1 mt-4 px-3 space-y-1">
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="layout-dashboard" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Dashboard</span>
+                </a>
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="droplets" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Milk Collection</span>
+                </a>
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="users" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Farmers</span>
+                </a>
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="book-open" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Ledger</span>
+                </a>
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="indian-rupee" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Payments</span>
+                </a>
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="shopping-bag" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Milk Sales</span>
+                </a>
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="warehouse" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Inventory</span>
+                </a>
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="bar-chart-3" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Reports</span>
+                </a>
+                <a href="main-work.html" class="sidebar-item">
+                    <i data-lucide="shield-check" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">MilkLedger Evidence</span>
+                </a>
+                <a href="backup.html" class="sidebar-item active">
+                    <i data-lucide="database" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Backup</span>
+                </a>
+                <a href="settings.html" class="sidebar-item">
+                    <i data-lucide="settings" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Settings</span>
+                </a>
+                <a href="logout.html" class="sidebar-item">
+                    <i data-lucide="log-out" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                    <span class="font-bold text-sm tracking-tight">Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="flex items-center gap-6">
+                    <h1 class="text-xl font-bold text-slate-800 uppercase tracking-wide" id="dairyName">Gopal Dairy Shop</h1>
+                    <span class="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-bold flex items-center gap-1">
+                        <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                        <span id="currentDate">Loading...</span>
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">System Healthy</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="text-amber-600" style="width: 14px; height: 14px;"></i>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Pending: <span id="pendingCount">0</span></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-slate-700" id="userName">Ramesh Kumar</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Administrator</p>
+                        </div>
+                        <div class="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center font-black text-slate-600 border shadow-inner" id="userInitial">R</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8">
+                <div class="max-w-2xl mx-auto space-y-8">
+                    <div class="flex items-center gap-6 bg-blue-50/50 p-8 rounded-3xl border-2 border-dashed border-blue-200">
+                        <i data-lucide="database" style="width: 48px; height: 48px;" class="text-blue-600"></i>
+                        <div>
+                            <p class="font-black text-xl uppercase tracking-tighter">Aapka data safe hai</p>
+                            <p class="text-sm font-bold text-slate-400 italic">Last backup: <span id="lastBackupTime">No backup found</span></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <button
+                            onclick="backupData()"
+                            class="py-6 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700"
+                        >Secure Backup</button>
+                        <button
+                            onclick="restoreData()"
+                            class="py-6 bg-slate-900 text-white rounded-2xl font-black text-lg hover:bg-slate-800"
+                        >Restore Data</button>
+                    </div>
+
+                    <div class="bg-slate-100 dark:bg-slate-800/50 rounded-2xl p-6">
+                        <h3 class="font-bold text-lg mb-4">Backup History</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+                                <span>Today's Backup</span>
+                                <span class="text-slate-500 text-sm">10:30 AM</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+                                <span>Yesterday's Backup</span>
+                                <span class="text-slate-500 text-sm">10:15 AM</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+                                <span>Jan 15, 2026</span>
+                                <span class="text-slate-500 text-sm">09:45 AM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="print:hidden text-center py-4 text-slate-500 text-sm border-t bg-slate-50">
+        Designed by <span class="font-bold text-slate-700">signimus</span>
+    </footer>
+
+    <script src="state.js"></script>
+    <script src="db.js"></script>
+    <script src="utils.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Update header information
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN');
+
+        // Initialize auth system
+        initAuth();
+
+        // Check authentication
+        const session = sessionStorage.getItem('milkbook_session');
+        if (!session) {
+            window.location.href = 'index.html';
+        }
+
+        // Load state from localStorage
+        const savedData = localStorage.getItem('milkbook_data');
+        let state;
+        try {
+            state = savedData ? JSON.parse(savedData) : { ...INITIAL_STATE };
+        } catch (e) {
+            console.error('Error parsing state:', e);
+            state = { ...INITIAL_STATE };
+        }
+
+        // Update header info
+        document.getElementById('dairyName').textContent = state.dairyInfo?.name || 'Milk Collection Center';
+        document.getElementById('userName').textContent = state.auth?.user?.name || 'User';
+        document.getElementById('userInitial').textContent = (state.auth?.user?.name || 'U').charAt(0).toUpperCase();
+        document.getElementById('pendingCount').textContent = state.settings?.pendingRecords || 0;
+
+        // Backup data function
+        async function backupData() {
+            try {
+                // Simulate backup process
+                const backupData = {
+                    timestamp: new Date().toISOString(),
+                    data: state,
+                    version: '1.0'
+                };
+
+                // Save to localStorage as backup
+                localStorage.setItem('milkbook_backup', JSON.stringify(backupData));
+                
+                // Update last backup time
+                document.getElementById('lastBackupTime').textContent = new Date().toLocaleTimeString('en-IN');
+                
+                alert('Backup completed successfully!');
+            } catch (error) {
+                console.error('Backup error:', error);
+                alert('Backup failed: ' + error.message);
+            }
+        }
+
+        // Restore data function
+        async function restoreData() {
+            try {
+                const backupData = localStorage.getItem('milkbook_backup');
+                if (!backupData) {
+                    alert('No backup found!');
+                    return;
+                }
+
+                const parsedBackup = JSON.parse(backupData);
+                localStorage.setItem('milkbook_data', JSON.stringify(parsedBackup.data));
+                
+                alert('Data restored successfully! Please refresh the page.');
+                location.reload();
+            } catch (error) {
+                console.error('Restore error:', error);
+                alert('Restore failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -6,6 +6,7 @@
     <title>Audit Reports - MilkBook</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="cycle-manager.js"></script>
     <style>
         /* Base styles */
         body { 
@@ -579,7 +580,19 @@
                 <div class="max-w-6xl mx-auto">
                     <div class="flex justify-between items-center mb-6 print:hidden">
                         <h2 class="text-2xl font-black tracking-tighter uppercase">Audit Reports</h2>
-                        <div class="flex gap-3">
+                        <div class="flex gap-3 items-center">
+                            <!-- Cycle Selector -->
+                            <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-3 shadow-sm">
+                                <label class="text-sm font-bold text-slate-700">Cycle:</label>
+                                <select id="cycleTypeSelector" class="border-0 focus:ring-2 focus:ring-primary rounded-lg text-sm font-bold">
+                                    <option value="daily">Daily</option>
+                                    <option value="bi-weekly" selected>15-Day</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+
+                            <!-- WhatsApp Buttons -->
                             <button
                                 id="whatsappTodayBtn"
                                 onclick="sendTodayReportViaWhatsApp()"

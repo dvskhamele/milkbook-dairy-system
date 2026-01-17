@@ -20,7 +20,7 @@ function getCyclePeriods(cycleType, startDate, endDate) {
         case CYCLE_TYPES.BI_WEEKLY:
             // Create 15-day periods
             let biWeekStart = new Date(start);
-            while (biWeekStart < end) {
+            while (biWeekStart <= end) {
                 const biWeekEnd = new Date(biWeekStart);
                 biWeekEnd.setDate(biWeekStart.getDate() + 14); // 15 days (0-14)
                 
@@ -100,7 +100,8 @@ function getCyclePeriods(cycleType, startDate, endDate) {
 
 // Format date as DD/MM/YYYY
 function formatDate(date) {
-    return new Date(date).toLocaleDateString('en-IN');
+    const d = new Date(date);
+    return d.toLocaleDateString('en-IN');
 }
 
 // Calculate summary for a period
@@ -109,17 +110,17 @@ function calculatePeriodSummary(period, milkEntries, payments) {
         const entryDate = new Date(entry.date);
         return entryDate >= period.startDate && entryDate <= period.endDate;
     });
-
+    
     const periodPayments = payments.filter(payment => {
         const paymentDate = new Date(payment.date);
         return paymentDate >= period.startDate && paymentDate <= period.endDate;
     });
-
+    
     // Calculate totals
     const totalMilkQty = periodEntries.reduce((sum, entry) => sum + (parseFloat(entry.qty) || parseFloat(entry.quantity) || 0), 0);
     const totalMilkAmount = periodEntries.reduce((sum, entry) => sum + (parseFloat(entry.amount) || 0), 0);
     const totalPayments = periodPayments.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0);
-
+    
     return {
         milkCount: periodEntries.length,
         totalMilkQty: parseFloat(totalMilkQty.toFixed(2)),
@@ -128,239 +129,6 @@ function calculatePeriodSummary(period, milkEntries, payments) {
         netAmount: parseFloat((totalMilkAmount - totalPayments).toFixed(2))
     };
 }
-
-// Get auto cycle periods based on type
-function getAutoCyclePeriods(cycleType, startDate, endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const periods = [];
-
-    switch (cycleType) {
-        case 'bi-weekly': // 15-day cycle
-            let biWeekStart = new Date(start);
-            while (biWeekStart <= end) {
-                const biWeekEnd = new Date(biWeekStart);
-                biWeekEnd.setDate(biWeekStart.getDate() + 14); // 15 days (0-14)
-
-                if (biWeekEnd > end) {
-                    biWeekEnd.setTime(end.getTime());
-                }
-
-                periods.push({
-                    label: `15-Day: ${formatDate(biWeekStart)} to ${formatDate(biWeekEnd)}`,
-                    startDate: new Date(biWeekStart),
-                    endDate: new Date(biWeekEnd),
-                    type: 'bi-weekly'
-                });
-
-                biWeekStart.setDate(biWeekStart.getDate() + 15);
-            }
-            break;
-
-        case 'monthly':
-            // Create monthly periods
-            let monthStart = new Date(start.getFullYear(), start.getMonth(), 1);
-            while (monthStart <= end) {
-                const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
-                if (monthEnd > end) {
-                    monthEnd.setTime(end.getTime());
-                }
-
-                periods.push({
-                    label: `${monthStart.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}`,
-                    startDate: new Date(monthStart),
-                    endDate: new Date(monthEnd),
-                    type: 'monthly'
-                });
-
-                monthStart.setMonth(monthStart.getMonth() + 1);
-            }
-            break;
-
-        case 'weekly':
-            // Create weekly periods
-            let weekStart = new Date(start);
-            // Set to previous Monday
-            const day = weekStart.getDay();
-            const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-            weekStart = new Date(weekStart.setDate(diff));
-
-            while (weekStart <= end) {
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-
-                if (weekEnd > end) {
-                    weekEnd.setTime(end.getTime());
-                }
-
-                periods.push({
-                    label: `Week: ${formatDate(weekStart)} to ${formatDate(weekEnd)}`,
-                    startDate: new Date(weekStart),
-                    endDate: new Date(weekEnd),
-                    type: 'weekly'
-                });
-
-                weekStart.setDate(weekStart.getDate() + 7);
-            }
-            break;
-
-        default: // Daily
-            let day = new Date(start);
-            while (day <= end) {
-                periods.push({
-                    label: formatDate(day),
-                    startDate: new Date(day),
-                    endDate: new Date(day),
-                    type: 'daily'
-                });
-                day.setDate(day.getDate() + 1);
-            }
-    }
-
-    return periods;
-}
-
-// Generate auto cycle summary
-function generateAutoCycleSummary(cycleType, startDate, endDate, milkEntries, payments) {
-    const periods = getAutoCyclePeriods(cycleType, startDate, endDate);
-    const summary = {
-        cycleType,
-        startDate,
-        endDate,
-        periods: []
-    };
-
-    periods.forEach(period => {
-        const periodSummary = calculatePeriodSummary(period, milkEntries, payments);
-        summary.periods.push({
-            ...period,
-            summary: periodSummary
-        });
-    });
-
-    return summary;
-}
-
-// Auto cycle manager for shift-based cycles
-function initAutoCycleManager() {
-    // Initialize auto cycle data structure if it doesn't exist
-    if (!localStorage.getItem('autocycles')) {
-        const initialCycles = {
-            activeCycles: [],
-            cycleHistory: [],
-            settings: {
-                defaultCycle: 'bi-weekly', // Default to 15-day cycle
-                autoGroupingEnabled: true,
-                autoSummaryEnabled: true,
-                lastAutoRun: null
-            }
-        };
-
-        localStorage.setItem('autocycles', JSON.stringify(initialCycles));
-    }
-}
-
-// Create a new auto cycle
-function createAutoCycle(config) {
-    const cyclesData = JSON.parse(localStorage.getItem('autocycles') || '{"activeCycles": [], "cycleHistory": [], "settings": {"defaultCycle": "bi-weekly", "autoGroupingEnabled": true, "autoSummaryEnabled": true, "lastAutoRun": null}}');
-
-    const newCycle = {
-        id: `cycle_${Date.now()}`,
-        name: config.name || `Auto Cycle ${cyclesData.activeCycles.length + 1}`,
-        type: config.type || 'bi-weekly', // 'daily', 'weekly', 'bi-weekly', 'monthly'
-        startDate: config.startDate || new Date().toISOString().split('T')[0],
-        endDate: config.endDate || null, // null means ongoing
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        lastRun: null,
-        summary: null
-    };
-
-    cyclesData.activeCycles.push(newCycle);
-    localStorage.setItem('autocycles', JSON.stringify(cyclesData));
-
-    return newCycle;
-}
-
-// Update an auto cycle
-function updateAutoCycle(cycleId, updates) {
-    const cyclesData = JSON.parse(localStorage.getItem('autocycles') || '{"activeCycles": [], "cycleHistory": [], "settings": {"defaultCycle": "bi-weekly", "autoGroupingEnabled": true, "autoSummaryEnabled": true, "lastAutoRun": null}}');
-
-    const cycleIndex = cyclesData.activeCycles.findIndex(c => c.id === cycleId);
-    if (cycleIndex !== -1) {
-        cyclesData.activeCycles[cycleIndex] = {
-            ...cyclesData.activeCycles[cycleIndex],
-            ...updates,
-            updatedAt: new Date().toISOString()
-        };
-
-        localStorage.setItem('autocycles', JSON.stringify(cyclesData));
-    }
-}
-
-// Get active auto cycles
-function getActiveAutoCycles() {
-    const cyclesData = JSON.parse(localStorage.getItem('autocycles') || '{"activeCycles": [], "cycleHistory": [], "settings": {"defaultCycle": "bi-weekly", "autoGroupingEnabled": true, "autoSummaryEnabled": true, "lastAutoRun": null}}');
-    return cyclesData.activeCycles;
-}
-
-// Run auto cycle to generate summary
-function runAutoCycle(cycleId) {
-    const cyclesData = JSON.parse(localStorage.getItem('autocycles') || '{"activeCycles": [], "cycleHistory": [], "settings": {"defaultCycle": "bi-weekly", "autoGroupingEnabled": true, "autoSummaryEnabled": true, "lastAutoRun": null}}');
-
-    const cycle = cyclesData.activeCycles.find(c => c.id === cycleId);
-    if (!cycle) return null;
-
-    // Get all milk entries and payments for the cycle period
-    const STORAGE_KEY = 'milkbook_data';
-    const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || JSON.stringify({ milkEntries: [], payments: [] }));
-
-    const milkEntries = state.milkEntries || [];
-    const payments = state.payments || [];
-
-    // Determine end date for the cycle
-    const endDate = cycle.endDate || new Date().toISOString().split('T')[0];
-
-    // Generate summary for the cycle
-    const summary = generateAutoCycleSummary(cycle.type, cycle.startDate, endDate, milkEntries, payments);
-
-    // Update the cycle with the summary
-    cycle.summary = summary;
-    cycle.lastRun = new Date().toISOString();
-
-    // Move to history if cycle is completed
-    if (cycle.endDate && new Date() >= new Date(cycle.endDate)) {
-        const cycleIndex = cyclesData.activeCycles.findIndex(c => c.id === cycleId);
-        if (cycleIndex !== -1) {
-            cyclesData.activeCycles.splice(cycleIndex, 1);
-            cyclesData.cycleHistory.push(cycle);
-        }
-    }
-
-    localStorage.setItem('autocycles', JSON.stringify(cyclesData));
-
-    return cycle;
-}
-
-// Get auto cycle selector HTML for UI integration
-function getAutoCycleSelectorHTML() {
-    return `
-        <div class="auto-cycle-selector flex items-center gap-3">
-            <label class="text-sm font-medium">Auto Cycle:</label>
-            <select id="autoCycleType" class="border rounded px-2 py-1 text-sm">
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="bi-weekly" selected>15-Day</option>
-                <option value="monthly">Monthly</option>
-            </select>
-            <button id="switchAutoCycle" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">Switch</button>
-            <button id="autoSummaryBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Auto Summary</button>
-        </div>
-    `;
-}
-
-// Initialize auto cycle manager when the app starts
-initAutoCycleManager();
 
 // Generate auto cycle summary
 function generateAutoCycleSummary(cycleType, startDate, endDate, milkEntries, payments) {
@@ -408,12 +176,12 @@ document.addEventListener('DOMContentLoaded', function() {
 // Add cycle selector to relevant pages
 function addCycleSelectorToPages() {
     // Check if we're on a reports or ledger page
-    const isReportsPage = document.querySelector('#reports.html') || 
+    const isReportsPage = document.querySelector('[data-page="reports"]') || 
                          document.body.innerHTML.includes('report') || 
                          document.querySelector('#totalMilkCollected');
     
     const isLedgerPage = document.body.innerHTML.includes('ledger') || 
-                        document.body.innerHTML.includes('farmer') || 
+                        document.body.innerHTML.includes('passbook') || 
                         document.querySelector('#farmerSelect');
     
     if (isReportsPage || isLedgerPage) {

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - MilkBook</title>
+    <link rel="stylesheet" href="/assets/app.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-900">
+    <div class="min-h-screen w-full flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-12">
+            <h2 class="text-3xl font-black text-slate-800 mb-2 tracking-tighter uppercase">Register Center</h2>
+            <p class="text-slate-500 font-bold mb-8">Setup your digital procurement system.</p>
+            <form id="registerForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-black text-slate-500 uppercase mb-2">Dairy Name</label>
+                    <input 
+                        type="text" 
+                        id="dairyName"
+                        required 
+                        class="w-full p-4 bg-slate-50 border rounded-xl font-bold" 
+                        placeholder="Name of your dairy center"
+                    >
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase mb-2">Owner Name</label>
+                    <input 
+                        type="text" 
+                        id="ownerName"
+                        required 
+                        class="w-full p-4 bg-slate-50 border rounded-xl font-bold" 
+                        placeholder="Your name"
+                    >
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase mb-2">Mobile</label>
+                    <input 
+                        type="text" 
+                        id="mobile"
+                        required 
+                        class="w-full p-4 bg-slate-50 border rounded-xl font-bold" 
+                        placeholder="Mobile number"
+                    >
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase mb-2">Password</label>
+                    <input 
+                        type="password" 
+                        id="password"
+                        required 
+                        class="w-full p-4 bg-slate-50 border rounded-xl" 
+                        placeholder="Set password"
+                    >
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase mb-2">Confirm Password</label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword"
+                        required 
+                        class="w-full p-4 bg-slate-50 border rounded-xl" 
+                        placeholder="Confirm password"
+                    >
+                </div>
+                <div class="md:col-span-2 flex justify-end pt-4">
+                    <button type="submit" class="px-8 py-4 bg-blue-600 text-white rounded-xl font-black text-lg hover:bg-blue-700">Initialize Dairy System</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/assets/state.js"></script>
+    <script src="/assets/db.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Register form handling
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const dairyName = document.getElementById('dairyName').value.trim();
+            const ownerName = document.getElementById('ownerName').value.trim();
+            const mobile = document.getElementById('mobile').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            if (!dairyName || !ownerName || !mobile || !password) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            // Create initial data structure
+            const initialData = {
+                auth: {
+                    user: {
+                        name: ownerName,
+                        mobile: mobile,
+                        password: password
+                    },
+                    role: 'owner'
+                },
+                dairyInfo: {
+                    name: dairyName,
+                    owner: ownerName,
+                    mobile: mobile,
+                    address: '',
+                    rateType: 'Fat_SNF',
+                    language: 'EN'
+                },
+                farmers: [],
+                milkEntries: [],
+                rates: {
+                    cow: { base: 40, fatRef: 3.5, snfRef: 8.5 },
+                    buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 }
+                },
+                payments: [],
+                sales: [],
+                inventory: [],
+                settings: {
+                    backupEnabled: true,
+                    lastBackup: null,
+                    printerName: 'Default',
+                    syncState: 'QUARANTINED',
+                    lastServerSync: null,
+                    pendingRecords: 0,
+                    lastSyncTime: null,
+                    localRecordsToday: 0
+                }
+            };
+
+            // Store data
+            localStorage.setItem('milkbook_data', JSON.stringify(initialData));
+
+            // Set session data
+            sessionStorage.setItem('milkbook_session', JSON.stringify({
+                authenticated: true,
+                user: initialData.auth.user,
+                role: initialData.auth.role
+            }));
+
+            // Update global state
+            window.MilkBook = window.MilkBook || {};
+            window.MilkBook.currentUser = initialData.auth.user;
+            window.MilkBook.role = initialData.auth.role;
+
+            alert('Registration successful! Redirecting to dashboard...');
+            window.location.href = 'dashboard.html';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Farmer Ledger - MilkBook</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2563eb",
+                        "primary-hover": "#1d4ed8",
+                        "background-main": "#f8fafc","surface-white": "#ffffff",
+                        "text-main": "#1e293b","text-secondary": "#64748b",
+                        "border-subtle": "#e2e8f0",
+                        "border-focus": "#2563eb",
+                        "success-green": "#10b981",
+                        "danger-red": "#ef4444",
+                        "warning-amber": "#f59e0b",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    boxShadow: {
+                        "soft": "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+                        "tile": "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)",
+                        "tile-hover": "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)",
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .input-tile:focus-within {
+            border-color: #2563eb;
+            border-width: 3px;
+            background-color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.15), 0 8px 10px -6px rgba(37, 99, 235, 0.15);
+            z-index: 10;
+        }
+        .input-tile {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        /* Transaction row with correction indicator */
+        .correction-entry {
+            background-color: #fee2e2; /* Light red background for corrections */
+        }
+        
+        .correction-indicator {
+            display: inline-block;
+            background-color: #dc2626; /* Red background */
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-background-main font-display h-screen flex flex-col overflow-hidden text-text-main selection:bg-primary/20 selection:text-primary">
+    <!-- Sidebar Navigation -->
+    <aside class="fixed left-0 top-0 z-20 hidden h-full w-64 flex-col border-r border-slate-200 bg-white p-6 pt-24 shadow-sm md:flex dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="mb-10 flex items-center gap-3">
+            <div class="flex size-10 items-center justify-center rounded-lg bg-primary">
+                <img src="logo.jpg" alt="MilkBook Logo" class="text-white" style="width: 24px; height: 24px;">
+            </div>
+            <div>
+                <h2 class="text-xl font-bold uppercase tracking-tighter">MilkBook</h2>
+                <p class="text-xs font-bold uppercase tracking-widest text-slate-500">Vadgaon Center</p>
+            </div>
+        </div>
+        <nav class="flex flex-1 flex-col gap-1">
+            <a href="dashboard.html" class="sidebar-item">
+                <i data-lucide="layout-dashboard" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Dashboard">Dashboard</span>
+            </a>
+            <a href="collection.html" class="sidebar-item">
+                <i data-lucide="water_full" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Milk Collection">Milk Collection</span>
+            </a>
+            <a href="farmers.html" class="sidebar-item">
+                <i data-lucide="users" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Farmers">Farmers</span>
+            </a>
+            <a href="ledger.html" class="sidebar-item active">
+                <i data-lucide="receipt_long" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Ledger">Ledger</span>
+            </a>
+            <a href="passbook.html" class="sidebar-item">
+                <i data-lucide="book-open" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Passbook">Passbook</span>
+            </a>
+            <a href="payments.html" class="sidebar-item">
+                <i data-lucide="payments" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Payments">Payments</span>
+            </a>
+            <a href="milk-sales.html" class="sidebar-item">
+                <i data-lucide="shopping-bag" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Milk Sales">Milk Sales</span>
+            </a>
+            <a href="inventory.html" class="sidebar-item">
+                <i data-lucide="inventory" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Inventory">Inventory</span>
+            </a>
+            <a href="reports.html" class="sidebar-item">
+                <i data-lucide="bar-chart-3" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Reports">Reports</span>
+            </a>
+            <a href="milkledger-evidence.html" class="sidebar-item">
+                <i data-lucide="shield-check" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="MilkLedger Evidence">MilkLedger Evidence</span>
+            </a>
+            <a href="backup.html" class="sidebar-item">
+                <i data-lucide="backup" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Backup">Backup</span>
+            </a>
+            <a href="settings.html" class="sidebar-item">
+                <i data-lucide="settings" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Settings">Settings</span>
+            </a>
+            <a href="logout.html" class="sidebar-item">
+                <i data-lucide="log-out" class="shrink-0" style="width: 20px; height: 20px;"></i>
+                <span class="font-bold text-sm tracking-tight" data-translate="Logout">Logout</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="md:ml-64">
+        <!-- Header -->
+        <header class="sticky top-0 z-10 flex items-center justify-between border-b border-solid border-[#dce3e5] dark:border-gray-800 bg-white dark:bg-background-dark px-6 py-4 shadow-sm">
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-3">
+                    <div class="size-10 bg-primary flex items-center justify-center rounded-xl text-white shadow-lg shadow-primary/30">
+                        <span class="material-symbols-outlined text-2xl">water_drop</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold tracking-tight" id="dairyName">Gopal Dairy Shop</h2>
+                </div>
+                <nav class="hidden md:flex items-center gap-6">
+                    <a class="text-primary font-bold border-b-2 border-primary pb-1" href="milk-sales.html">Sales</a>
+                    <a class="text-gray-500 dark:text-gray-400 font-medium hover:text-primary transition-colors" href="inventory.html">Inventory</a>
+                    <a class="text-gray-500 dark:text-gray-400 font-medium hover:text-primary transition-colors" href="farmers.html">Farmers</a>
+                    <a class="text-gray-500 dark:text-gray-400 font-medium hover:text-primary transition-colors" href="reports.html">Reports</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="relative hidden sm:block">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    <input class="pl-10 pr-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-primary w-64" placeholder="Search customer..." type="text">
+                </div>
+                <button class="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <div class="size-10 rounded-full bg-primary/20 border-2 border-primary overflow-hidden" data-alt="Profile avatar of the shop owner">
+                    <img alt="Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuf9ughrQNq15i7W0rdKfeX2VJNw5EFzy88vVyJnbImfXeCFoifjQK32iOXC43bLNKrSVh1rORDFRqlRoHtIaWW1qkLnERMw_EuLbffucnGzayRUfM4NrqlcbeEjrhmRZoCR-MOwQiB3UyZz2TEI_PgdwQJCUsP-BgDqWhNQHfzBAmiAAuoOfXdTIf_gdDaq7cmHnkGTM2LLIsqAzfsHbyXfQu9OcSfsL2cnFdTc0Cq5NF4S40FP41OSzpCdX_bf3tUc0-1z3ZJw">
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex flex-col gap-3 mb-8">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Step 4 of 9</span>
+                        <span class="text-sm font-bold text-primary">Farmer Passbook</span>
+                    </div>
+                    <div class="h-2.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style="width: 44%"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 class="text-3xl font-black tracking-tight uppercase">Farmer Ledger</h1>
+                        <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Individual farmer passbooks with transaction history.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="px-6 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold flex items-center gap-2 shadow-sm hover:bg-slate-50 transition-colors">
+                            <span class="material-symbols-outlined">history</span>
+                            History
+                        </button>
+                        <button class="px-6 py-3 bg-primary text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors">
+                            <span class="material-symbols-outlined">print</span>
+                            Print Passbook
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    <div class="lg:col-span-2">
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-40 shadow-tile opacity-90 hover:opacity-100 focus-within:opacity-100 focus-within:ring-0">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">person</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">1</span>
+                                <select
+                                    id="farmerSelect"
+                                    required
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    onchange="updateLedgerForFarmer(this.value)"
+                                >
+                                    <option value="">Select Farmer</option>
+                                </select>
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <button
+                                    type="button"
+                                    class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                                    onclick="focusNextField('farmerSelect', 'startDateInput')"
+                                >
+                                    <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-40 shadow-tile opacity-90 hover:opacity-100 focus-within:opacity-100 focus-within:ring-0">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">calendar_month</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">2</span>
+                                <input
+                                    type="date"
+                                    id="startDateInput"
+                                    required
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    value=""
+                                    onchange="focusNextField(this, 'endDateInput')"
+                                />
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <button
+                                    type="button"
+                                    class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                                    onclick="focusNextField('startDateInput', 'endDateInput')"
+                                >
+                                    <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-40 shadow-tile opacity-90 hover:opacity-100 focus-within:opacity-100 focus-within:ring-0">
+                            <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                                <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">calendar_month</span>
+                            </div>
+                            <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                                <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">3</span>
+                                <input
+                                    type="date"
+                                    id="endDateInput"
+                                    required
+                                    class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                                    value=""
+                                    onchange="focusNextField(this, 'viewLedgerBtn')"
+                                />
+                            </label>
+                            <div class="flex px-6 items-center border-l border-border-subtle">
+                                <button
+                                    type="button"
+                                    class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                                    onclick="focusNextField('endDateInput', 'viewLedgerBtn')"
+                                >
+                                    <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button
+                            id="viewLedgerBtn"
+                            onclick="updateLedgerForFarmer()"
+                            class="w-full py-6 bg-primary hover:bg-primary/90 active:bg-primary/80 text-white rounded-3xl p-6 shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-1 flex items-center justify-between group h-40 mb-8"
+                        >
+                            <div class="flex flex-col items-start">
+                                <span class="bg-primary/30 rounded-lg px-3 py-1 text-sm font-bold uppercase tracking-wider mb-2">Step 4</span>
+                                <span class="text-3xl font-bold uppercase tracking-wide">View Ledger</span>
+                            </div>
+                            <div class="h-24 w-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                                <span class="material-symbols-outlined text-6xl">receipt_long</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-primary to-blue-600 rounded-3xl p-8 text-white overflow-hidden group shadow-xl shadow-blue-200 flex flex-col items-center justify-center text-center">
+                        <div class="absolute inset-0 opacity-20 mix-blend-overlay" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px;"></div>
+                        <div class="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 bg-white blur-3xl opacity-20 rounded-full group-hover:opacity-30 transition-opacity"></div>
+                        <span class="material-symbols-outlined text-6xl mb-2 text-blue-100 opacity-80">account_balance_wallet</span>
+                        <div class="relative z-10 flex items-baseline gap-1 justify-center w-full">
+                            <span class="text-7xl lg:text-8xl font-bold tracking-tight text-white drop-shadow-sm leading-none" id="farmerBalance">0.00</span>
+                        </div>
+                        <p class="text-lg font-medium mt-2 text-blue-100/80">Current Balance</p>
+                    </div>
+                </div>
+
+                <div class="card bg-surface-light dark:bg-surface-dark rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <h3 class="text-xl font-bold">Transaction History</h3>
+                        <div class="flex gap-3">
+                            <button class="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xs">download</span>
+                                Export CSV
+                            </button>
+                            <button class="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xs">print</span>
+                                Print
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50/50 dark:bg-slate-900/50 text-slate-500 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-6 py-4 font-bold">Date</th>
+                                    <th class="px-6 py-4 font-bold">Type</th>
+                                    <th class="px-6 py-4 font-bold">Description</th>
+                                    <th class="px-6 py-4 font-bold">Debit</th>
+                                    <th class="px-6 py-4 font-bold">Credit</th>
+                                    <th class="px-6 py-4 font-bold text-right">Balance</th>
+                                    <th class="px-6 py-4 font-bold text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionHistory">
+                                <tr>
+                                    <td colSpan="7" className="py-8 text-center text-slate-500">Select a farmer to view transaction history</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Correction Entry Modal -->
+    <div id="correctionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Correction Entry</h3>
+                <button id="closeCorrectionModal" class="text-gray-500 hover:text-gray-700">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Correction Reason</label>
+                <select id="correctionReason" class="w-full p-3 border rounded-lg">
+                    <option value="incorrect_quantity">Incorrect Quantity</option>
+                    <option value="incorrect_fat">Incorrect Fat %</option>
+                    <option value="incorrect_rate">Incorrect Rate</option>
+                    <option value="duplicate_entry">Duplicate Entry</option>
+                    <option value="wrong_farmer">Wrong Farmer</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Correction Amount (₹)</label>
+                <input type="number" id="correctionAmount" class="w-full p-3 border rounded-lg" placeholder="Enter negative amount for deduction" step="0.01">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Admin PIN</label>
+                <input type="password" id="adminPin" class="w-full p-3 border rounded-lg" placeholder="Enter admin PIN">
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="confirmCorrection" class="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold">Confirm Correction</button>
+                <button id="cancelCorrection" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-lg font-bold">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="print:hidden text-center py-4 text-slate-500 text-sm border-t bg-slate-50">
+        Designed by <span class="font-bold text-slate-700">signimus</span>
+    </footer>
+
+    <script src="dairy-manager.js"></script>
+    <script src="cycle-manager.js"></script>
+    <script src="translations.js"></script>
+    <script src="state.js"></script>
+    <script src="db.js"></script>
+    <script src="utils.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Update header information
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN');
+
+        // Check authentication
+        const session = sessionStorage.getItem('milkbook_session');
+        if (!session) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Load state from localStorage
+        const STORAGE_KEY = 'milkbook_data';
+        const INITIAL_STATE = {
+            auth: {
+                isAuthenticated: true,
+                user: { name: 'Ramesh Kumar', mobile: '9876543210', role: 'owner' },
+                role: 'owner'
+            },
+            currentScreen: 'ledger',
+            dairyInfo: {
+                name: 'Gopal Dairy Shop',
+                owner: 'Ramesh Kumar',
+                mobile: '9876543210',
+                address: '',
+                rateType: 'Fat_SNF',
+                language: 'EN'
+            },
+            farmers: [],
+            milkEntries: [],
+            rates: {
+                cow: { base: 40, fatRef: 3.5, snfRef: 8.5 },
+                buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 }
+            },
+            payments: [],
+            sales: [],
+            inventory: [],
+            evidenceRecords: [], // For MilkLedger Transparent functionality
+            settings: {
+                backupEnabled: true,
+                lastBackup: null,
+                printerName: 'Default',
+                syncState: 'QUARANTINED', // 'QUARANTINED' | 'SYNCED'
+                lastServerSync: null,
+                pendingRecords: 0,
+                lastSyncTime: null,
+                localRecordsToday: 0
+            }
+        };
+
+        let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || JSON.stringify(INITIAL_STATE));
+
+        // Ensure state structure is correct
+        if (!state.farmers) state.farmers = [];
+        if (!state.milkEntries) state.milkEntries = [];
+        if (!state.payments) state.payments = [];
+        if (!state.sales) state.sales = [];
+        if (!state.inventory) state.inventory = [];
+        if (!state.evidenceRecords) state.evidenceRecords = [];
+        if (!state.settings) state.settings = INITIAL_STATE.settings;
+
+        // Update header info
+        document.getElementById('dairyName').textContent = state.dairyInfo?.name || 'Milk Collection Center';
+        document.getElementById('userName').textContent = state.auth?.user?.name || 'User';
+        document.getElementById('userInitial').textContent = (state.auth?.user?.name || 'U').charAt(0).toUpperCase();
+        document.getElementById('pendingCount').textContent = state.settings?.pendingRecords || 0;
+
+        // Populate farmer dropdown
+        const farmerSelect = document.getElementById('farmerSelect');
+        farmerSelect.innerHTML = '<option value="">Select Farmer</option>';
+        state.farmers.filter(f => f.active !== false).forEach(farmer => {
+            const option = document.createElement('option');
+            option.value = farmer.id;
+            option.textContent = farmer.name;
+            farmerSelect.appendChild(option);
+        });
+
+        // Update farmer dropdowns function
+        function updateFarmerDropdowns(newState) {
+            // Update dropdowns on current page if they exist
+            const farmerDropdowns = document.querySelectorAll('select[id*="farmer"], select[id*="Farmer"], select[name*="farmer"], select[name*="Farmer"], select[id*="FarmerId"], select[name*="farmerId"]');
+
+            farmerDropdowns.forEach(dropdown => {
+                // Save current selection if possible
+                const currentSelection = dropdown.value;
+
+                // Clear existing options except the first placeholder
+                dropdown.innerHTML = '<option value="">Select Farmer</option>';
+
+                // Add all active farmers
+                (newState?.farmers || []).filter(f => f.active !== false).forEach(farmer => {
+                    const option = document.createElement('option');
+                    option.value = farmer.id;
+                    option.textContent = farmer.name;
+                    dropdown.appendChild(option);
+                });
+
+                // Restore previous selection if it still exists
+                if (currentSelection) {
+                    dropdown.value = currentSelection;
+                }
+            });
+
+            // Also update farmer dropdowns in other open tabs/windows using storage event
+            localStorage.setItem('milkbook_data', JSON.stringify(newState));
+        }
+
+        // Update ledger for selected farmer
+        function updateLedgerForFarmer(farmerId) {
+            if (!farmerId) {
+                document.getElementById('transactionHistory').innerHTML = '<tr><td colSpan="7" className="py-8 text-center text-slate-500">Select a farmer to view transaction history</td></tr>';
+                document.getElementById('farmerBalance').textContent = '0.00';
+                return;
+            }
+
+            const startDate = document.getElementById('startDateInput').value || new Date().toISOString().split('T')[0];
+            const endDate = document.getElementById('endDateInput').value || new Date().toISOString().split('T')[0];
+
+            // Get all transactions for this farmer
+            const milkEntries = state.milkEntries.filter(e => e.farmerId === farmerId);
+            const payments = state.payments.filter(p => p.farmerId === farmerId);
+
+            // Combine and sort by date
+            let transactions = [];
+
+            // Add milk collection entries (as credits)
+            milkEntries.forEach(entry => {
+                if (entry.date >= startDate && entry.date <= endDate) {
+                    transactions.push({
+                        date: entry.date,
+                        type: 'Milk Collection',
+                        description: `${entry.qty}L at ${entry.fat}% fat`,
+                        debit: 0,
+                        credit: parseFloat(entry.amount || 0),
+                        balance: 0,
+                        id: entry.id,
+                        entryType: entry.entryType || 'normal' // normal or correction
+                    });
+                }
+            });
+
+            // Add payment entries (as debits)
+            payments.forEach(payment => {
+                if (payment.date >= startDate && payment.date <= endDate) {
+                    transactions.push({
+                        date: payment.date,
+                        type: payment.type || 'Payment',
+                        description: payment.notes || 'Payment',
+                        debit: parseFloat(payment.amount || 0),
+                        credit: 0,
+                        balance: 0,
+                        id: payment.id,
+                        entryType: 'payment'
+                    });
+                }
+            });
+
+            // Sort by date
+            transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Calculate running balance
+            let balance = 0;
+            transactions.forEach(transaction => {
+                if (transaction.entryType === 'correction') {
+                    // For correction entries, adjust balance differently
+                    balance += transaction.credit - transaction.debit; // Corrections can be negative
+                } else {
+                    balance += transaction.credit - transaction.debit;
+                }
+                transaction.balance = balance;
+            });
+
+            // Update transaction history table
+            const transactionHistory = document.getElementById('transactionHistory');
+            if (transactionHistory) {
+                transactionHistory.innerHTML = '';
+
+                if (transactions.length > 0) {
+                    transactions.forEach(transaction => {
+                        const row = document.createElement('tr');
+                        
+                        // Add special class for correction entries
+                        if (transaction.entryType === 'correction') {
+                            row.classList.add('correction-entry');
+                        }
+                        
+                        row.innerHTML = `
+                            <td class="px-6 py-4 font-bold text-slate-500">${transaction.date}</td>
+                            <td class="px-6 py-4 font-bold">
+                                <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold ${
+                                    transaction.type === 'Milk Collection' ? 'bg-green-100 text-green-800' :
+                                    transaction.type === 'Payment' ? 'bg-red-100 text-red-800' :
+                                    transaction.entryType === 'correction' ? 'bg-amber-100 text-amber-800' :
+                                    'bg-slate-100 text-slate-800'
+                                }">
+                                    <span class="material-symbols-outlined text-xs">${
+                                        transaction.type === 'Milk Collection' ? 'water_drop' :
+                                        transaction.type === 'Payment' ? 'payments' :
+                                        transaction.entryType === 'correction' ? 'edit_square' : 'edit_note'
+                                    }</span>
+                                    ${transaction.type} ${transaction.entryType === 'correction' ? '<span class="correction-indicator">CORRECTION</span>' : ''}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 font-bold text-slate-700">${transaction.description}</td>
+                            <td class="px-6 py-4 font-bold text-red-600">${transaction.debit > 0 ? `₹${transaction.debit.toFixed(2)}` : '-'}</td>
+                            <td class="px-6 py-4 font-bold text-green-600">${transaction.credit > 0 ? `₹${transaction.credit.toFixed(2)}` : '-'}</td>
+                            <td class="px-6 py-4 text-right font-bold text-blue-600">₹${transaction.balance.toFixed(2)}</td>
+                            <td class="px-6 py-4 text-center">
+                                ${transaction.entryType !== 'correction' ? 
+                                    `<button class="text-red-600 hover:text-red-800 cursor-pointer" onclick="showCorrectionModal('${transaction.id}', '${farmerId}')">
+                                        <span class="material-symbols-outlined text-sm">edit_square</span>
+                                    </button>` : 
+                                    '<span class="text-gray-400">-</span>'}
+                            </td>
+                        `;
+                        transactionHistory.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colSpan="7" className="py-8 text-center text-slate-500">No transactions found for this period</td>';
+                    transactionHistory.appendChild(row);
+                }
+            }
+
+            // Update farmer balance display
+            document.getElementById('farmerBalance').textContent = transactions.length > 0 ?
+                transactions[transactions.length - 1].balance.toFixed(2) : '0.00';
+        }
+
+        // Show correction modal
+        function showCorrectionModal(entryId, farmerId) {
+            document.getElementById('correctionModal').classList.remove('hidden');
+            document.getElementById('originalEntryId').value = entryId;
+            document.getElementById('correctionFarmerId').value = farmerId;
+        }
+
+        // Hide correction modal
+        function hideCorrectionModal() {
+            document.getElementById('correctionModal').classList.add('hidden');
+        }
+
+        // Event listeners for correction modal
+        document.getElementById('closeCorrectionModal').addEventListener('click', hideCorrectionModal);
+        document.getElementById('cancelCorrection').addEventListener('click', hideCorrectionModal);
+
+        document.getElementById('confirmCorrection').addEventListener('click', async function() {
+            const reason = document.getElementById('correctionReason').value;
+            const amount = parseFloat(document.getElementById('correctionAmount').value);
+            const pin = document.getElementById('adminPin').value;
+            const originalEntryId = document.getElementById('originalEntryId').value;
+            const farmerId = document.getElementById('correctionFarmerId').value;
+
+            // Simple PIN validation (in production, this should be more secure)
+            if (pin !== '1234') { // Default demo PIN
+                alert('Invalid PIN. Correction not authorized.');
+                return;
+            }
+
+            if (!reason || isNaN(amount) || amount === 0) {
+                alert('Please fill in all fields correctly. Amount must be non-zero.');
+                return;
+            }
+
+            try {
+                // Create correction entry (negative amount to offset the original)
+                const correctionEntry = {
+                    id: `correction_${Date.now()}`,
+                    farmerId: farmerId,
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'correction',
+                    description: `Correction: ${reason}`,
+                    debit: amount < 0 ? Math.abs(amount) : 0,
+                    credit: amount > 0 ? amount : 0,
+                    originalEntryId: originalEntryId,
+                    reason: reason,
+                    syncState: 'QUARANTINED',
+                    createdAtLocal: new Date().toISOString(),
+                    syncedAtServer: null,
+                    isManual: true,
+                    inputSource: 'correction_entry',
+                    deviceId: navigator.userAgent,
+                    operatorId: state.auth?.user?.id || 'current_user',
+                    entryType: 'correction'
+                };
+
+                // Add to milk entries
+                state.milkEntries = state.milkEntries || [];
+                state.milkEntries.push(correctionEntry);
+
+                // Save to localStorage
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+                // Update pending records count
+                state.settings.pendingRecords = (state.settings.pendingRecords || 0) + 1;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+                alert('Correction entry added successfully!');
+
+                // Refresh the ledger view
+                updateLedgerForFarmer(farmerId);
+
+                // Hide modal and reset form
+                hideCorrectionModal();
+                document.getElementById('correctionReason').value = '';
+                document.getElementById('correctionAmount').value = '';
+                document.getElementById('adminPin').value = '';
+
+            } catch (error) {
+                console.error('Error adding correction entry:', error);
+                alert('Error adding correction entry: ' + error.message);
+            }
+        });
+
+        // Initial updates
+        updateFarmerDropdowns(state);
+
+        // Update ledger every 30 seconds
+        setInterval(() => {
+            const currentFarmer = document.getElementById('farmerSelect').value;
+            updateLedgerForFarmer(currentFarmer);
+        }, 30000);
+    </script>
+</body>
+</html>

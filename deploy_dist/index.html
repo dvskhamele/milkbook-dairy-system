@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MilkBook</title>
+    <link rel="stylesheet" href="/assets/app.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-900">
+    <div class="min-h-screen w-full flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-blue-600 p-10 text-white text-center">
+                <i data-lucide="droplet" class="mx-auto mb-4 text-white" style="width: 64px; height: 64px;"></i>
+                <h2 class="text-4xl font-black tracking-tighter">MilkBook</h2>
+                <p class="opacity-70 text-sm font-bold uppercase tracking-widest">Automatic Milk Collection & Dairy Accounting</p>
+            </div>
+            <form id="loginForm" class="p-10 space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
+                    <input
+                        type="text"
+                        id="mobileInput"
+                        required
+                        class="w-full p-4 bg-slate-50 border rounded-xl font-bold"
+                        placeholder="Enter mobile number"
+                    >
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Password</label>
+                    <input
+                        type="password"
+                        id="passwordInput"
+                        required
+                        class="w-full p-4 bg-slate-50 border rounded-xl font-bold"
+                        placeholder="Enter password"
+                    >
+                </div>
+                <button type="submit" class="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">LOGIN SYSTEM</button>
+                <div class="text-center">
+                    <a href="register.html" class="text-blue-600 font-black text-sm hover:underline uppercase tracking-tighter">Register New Dairy Center</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/assets/state.js"></script>
+    <script src="/assets/db.js"></script>
+    <script src="/assets/app.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Global state object
+        window.MilkBook = {
+            currentUser: null,
+            role: null,
+            mode: 'normal', // 'normal', 'collection'
+            currentShift: null,
+            lastSyncTime: null,
+            quarantineCount: 0
+        };
+
+        // Login form handling
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const mobile = document.getElementById('mobileInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+
+            if (!mobile || !password) {
+                alert('Please enter both mobile number and password');
+                return;
+            }
+
+            // Check credentials against stored data
+            const storedData = localStorage.getItem('milkbook_data');
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                if (data.auth && data.auth.user && data.auth.user.mobile === mobile && data.auth.user.password === password) {
+                    // Set session data
+                    sessionStorage.setItem('milkbook_session', JSON.stringify({
+                        authenticated: true,
+                        user: data.auth.user,
+                        role: data.auth.role || 'owner'
+                    }));
+
+                    // Update global state
+                    window.MilkBook.currentUser = data.auth.user;
+                    window.MilkBook.role = data.auth.role || 'owner';
+
+                    // Redirect to dashboard
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert('Invalid credentials');
+                }
+            } else {
+                alert('No account found. Please register first.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Today's Earnings - MilkBook</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;700;800&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1c5f20",
+                        "secondary": "#2563eb",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#131f14",
+                        "ledger-green": "#4CAF50",
+                        "ledger-amber": "#FFC107",
+                    },
+                    fontFamily: {
+                        "display": ["Epilogue", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6, .font-display {
+            font-family: 'Epilogue', sans-serif;
+        }
+        /* Custom scrollbar for table body */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#121712] h-screen flex flex-col overflow-hidden">
+    <!-- Header Section -->
+    <header class="flex-none bg-white border-b-4 border-[#121712] px-6 py-5 z-10 shadow-sm">
+        <div class="max-w-[1400px] mx-auto w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-6 w-full md:w-auto">
+                <button class="group flex items-center gap-3 pr-6 py-2 bg-primary text-white hover:bg-[#144617] transition-colors rounded-sm shadow-md active:transform active:translate-y-0.5">
+                    <span class="material-symbols-outlined text-4xl -ml-2 bg-white/10 p-1 rounded-r-sm group-hover:bg-white/20 transition-colors">
+                        arrow_back
+                    </span>
+                    <span class="font-display font-bold text-lg tracking-tight">Return to Collection</span>
+                </button>
+                <div class="hidden md:block h-10 w-[2px] bg-gray-200"></div>
+                <div class="flex flex-col">
+                    <h1 class="font-display text-2xl font-extrabold text-[#121712] tracking-tight">Today's Earnings</h1>
+                    <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
+                        <span>12 Oct 2023</span>
+                        <span class="w-1 h-1 rounded-full bg-gray-400"></span>
+                        <span class="flex items-center text-primary gap-1">
+                            <span class="material-symbols-outlined text-base">cloud_done</span>
+                            Synced
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="px-4 py-2 bg-gray-100 rounded-sm border border-gray-200">
+                    <span class="block text-xs uppercase tracking-wider text-gray-500 font-bold mb-0.5">Session ID</span>
+                    <span class="font-mono font-bold text-[#121712]">#SS-2023-891</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content: Ledger Table -->
+    <main class="flex-1 w-full max-w-[1400px] mx-auto px-0 md:px-6 py-6 overflow-hidden flex flex-col">
+        <!-- Table Container with shadow and border -->
+        <div class="flex flex-col h-full bg-white border-2 border-[#121712] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] rounded-sm overflow-hidden">
+            <!-- Table Header -->
+            <div class="flex-none bg-[#121712] text-white grid grid-cols-12 gap-4 px-6 py-4 items-center font-display uppercase tracking-widest text-xs font-bold">
+                <div class="col-span-1 text-center">Type</div>
+                <div class="col-span-2">Farmer ID</div>
+                <div class="col-span-3 text-right pr-8">Weight (L)</div>
+                <div class="col-span-3 text-right pr-8">Amount (₹)</div>
+                <div class="col-span-3 text-right">Running Balance</div>
+            </div>
+            
+            <!-- Table Body (Scrollable) -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar bg-white">
+                <!-- Row 1: Auto -->
+                <div class="group grid grid-cols-12 gap-4 px-6 py-5 items-center border-b-2 border-gray-200 hover:bg-gray-50 transition-colors">
+                    <div class="col-span-1 flex justify-center">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-ledger-green border-2 border-green-200">
+                            <span class="material-symbols-outlined font-bold">check</span>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="font-display font-bold text-xl text-[#121712]">#104</span>
+                        <div class="text-xs text-gray-400 font-mono mt-0.5">10:42 AM</div>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-body font-bold text-xl text-[#121712]">12.5</span>
+                        <span class="text-xs text-gray-400 ml-1">FAT 4.2</span>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-mono font-bold text-xl text-primary">450.00</span>
+                    </div>
+                    <div class="col-span-3 text-right">
+                        <span class="font-mono font-medium text-lg text-gray-500">450.00</span>
+                    </div>
+                </div>
+                
+                <!-- Row 2: Manual (Warning) -->
+                <div class="group grid grid-cols-12 gap-4 px-6 py-5 items-center border-b-2 border-gray-200 bg-amber-50/30 hover:bg-amber-50 transition-colors">
+                    <div class="col-span-1 flex justify-center">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 border-2 border-amber-200" title="Manual Entry">
+                            <span class="material-symbols-outlined filled font-bold" style="font-variation-settings: 'FILL' 1;">flag</span>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="font-display font-bold text-xl text-[#121712]">#105</span>
+                        <div class="text-xs text-amber-700 font-mono mt-0.5 font-bold">MANUAL</div>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-body font-bold text-xl text-[#121712]">4.2</span>
+                        <span class="text-xs text-gray-400 ml-1">FAT 3.8</span>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-mono font-bold text-xl text-primary">120.00</span>
+                    </div>
+                    <div class="col-span-3 text-right">
+                        <span class="font-mono font-medium text-lg text-gray-500">570.00</span>
+                    </div>
+                </div>
+                
+                <!-- Row 3: Auto -->
+                <div class="group grid grid-cols-12 gap-4 px-6 py-5 items-center border-b-2 border-gray-200 hover:bg-gray-50 transition-colors">
+                    <div class="col-span-1 flex justify-center">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-ledger-green border-2 border-green-200">
+                            <span class="material-symbols-outlined font-bold">check</span>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="font-display font-bold text-xl text-[#121712]">#106</span>
+                        <div class="text-xs text-gray-400 font-mono mt-0.5">10:48 AM</div>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-body font-bold text-xl text-[#121712]">8.0</span>
+                        <span class="text-xs text-gray-400 ml-1">FAT 4.0</span>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-mono font-bold text-xl text-primary">290.00</span>
+                    </div>
+                    <div class="col-span-3 text-right">
+                        <span class="font-mono font-medium text-lg text-gray-500">860.00</span>
+                    </div>
+                </div>
+                
+                <!-- Row 4: Auto -->
+                <div class="group grid grid-cols-12 gap-4 px-6 py-5 items-center border-b-2 border-gray-200 hover:bg-gray-50 transition-colors">
+                    <div class="col-span-1 flex justify-center">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-ledger-green border-2 border-green-200">
+                            <span class="material-symbols-outlined font-bold">check</span>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="font-display font-bold text-xl text-[#121712]">#107</span>
+                        <div class="text-xs text-gray-400 font-mono mt-0.5">10:52 AM</div>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-body font-bold text-xl text-[#121712]">15.2</span>
+                        <span class="text-xs text-gray-400 ml-1">FAT 4.5</span>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-mono font-bold text-xl text-primary">550.00</span>
+                    </div>
+                    <div class="col-span-3 text-right">
+                        <span class="font-mono font-medium text-lg text-gray-500">1,410.00</span>
+                    </div>
+                </div>
+                
+                <!-- Row 5: Auto -->
+                <div class="group grid grid-cols-12 gap-4 px-6 py-5 items-center border-b-2 border-gray-200 hover:bg-gray-50 transition-colors">
+                    <div class="col-span-1 flex justify-center">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-ledger-green border-2 border-green-200">
+                            <span class="material-symbols-outlined font-bold">check</span>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="font-display font-bold text-xl text-[#121712]">#108</span>
+                        <div class="text-xs text-gray-400 font-mono mt-0.5">11:05 AM</div>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-body font-bold text-xl text-[#121712]">3.5</span>
+                        <span class="text-xs text-gray-400 ml-1">FAT 3.9</span>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-mono font-bold text-xl text-primary">105.00</span>
+                    </div>
+                    <div class="col-span-3 text-right">
+                        <span class="font-mono font-medium text-lg text-gray-500">1,515.00</span>
+                    </div>
+                </div>
+                
+                <!-- Row 6: Auto -->
+                <div class="group grid grid-cols-12 gap-4 px-6 py-5 items-center border-b-2 border-gray-200 hover:bg-gray-50 transition-colors">
+                    <div class="col-span-1 flex justify-center">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-ledger-green border-2 border-green-200">
+                            <span class="material-symbols-outlined font-bold">check</span>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="font-display font-bold text-xl text-[#121712]">#109</span>
+                        <div class="text-xs text-gray-400 font-mono mt-0.5">11:12 AM</div>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-body font-bold text-xl text-[#121712]">9.1</span>
+                        <span class="text-xs text-gray-400 ml-1">FAT 4.1</span>
+                    </div>
+                    <div class="col-span-3 text-right pr-8">
+                        <span class="font-mono font-bold text-xl text-primary">315.50</span>
+                    </div>
+                    <div class="col-span-3 text-right">
+                        <span class="font-mono font-medium text-lg text-gray-500">1,830.50</span>
+                    </div>
+                </div>
+                
+                <!-- Empty State Filler to maintain visual weight if needed, or simply ends here -->
+                <div class="h-24 bg-gray-50/50 flex items-center justify-center border-b border-gray-100">
+                    <span class="text-gray-400 text-sm italic">End of current records</span>
+                </div>
+            </div>
+            
+            <!-- Table Footer / Summary -->
+            <div class="flex-none bg-gray-50 border-t-4 border-[#121712] px-8 py-5">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-white border border-gray-300 rounded shadow-sm">
+                            <span class="material-symbols-outlined text-gray-500">print</span>
+                        </div>
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Read-Only View</span>
+                    </div>
+                    <div class="flex gap-12">
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs uppercase tracking-widest font-bold text-gray-500 mb-1">Total Weight</span>
+                            <span class="font-display font-extrabold text-2xl text-[#121712]">43.4 <span class="text-sm font-medium text-gray-500">L</span></span>
+                        </div>
+                        <div class="w-px bg-gray-300 h-12"></div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs uppercase tracking-widest font-bold text-gray-500 mb-1">Total Payout</span>
+                            <span class="font-mono font-bold text-3xl text-primary">₹1,515.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Milk Collection Machine - MilkBook</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2563eb",
+                        "primary-hover": "#1d4ed8",
+                        "background-main": "#f8fafc",
+                        "surface-white": "#ffffff",
+                        "text-main": "#1e293b",
+                        "text-secondary": "#64748b",
+                        "border-subtle": "#e2e8f0",
+                        "border-focus": "#2563eb",
+                        "success-green": "#10b981",
+                        "danger-red": "#ef4444",
+                        "warning-amber": "#f59e0b",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    boxShadow: {
+                        "soft": "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+                        "tile": "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)",
+                        "tile-hover": "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)",
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .input-tile:focus-within {
+            border-color: #2563eb;
+            border-width: 3px;
+            background-color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.15), 0 8px 10px -6px rgba(37, 99, 235, 0.15);
+            z-index: 10;
+        }
+        .input-tile {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        /* Success flash animation */
+        @keyframes successFlash {
+            0% { background-color: #ffffff; }
+            50% { background-color: #d1fae5; }
+            100% { background-color: #ffffff; }
+        }
+        
+        .success-flash {
+            animation: successFlash 1s ease-in-out;
+        }
+        
+        /* Quick action strip */
+        .quick-action-strip {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 2px solid #e2e8f0;
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-around;
+            z-index: 100;
+        }
+        
+        .quick-action-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-action-icon:hover {
+            background-color: #f1f5f9;
+        }
+        
+        /* Rush hour mode adjustments */
+        .rush-hour .quick-action-strip {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        
+        .rush-hour .locked-feature {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="bg-background-main font-display h-screen flex flex-col overflow-hidden text-text-main selection:bg-primary/20 selection:text-primary rush-hour">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-[#dce3e5] dark:border-gray-800 bg-white dark:bg-background-dark px-6 py-4 shadow-sm">
+        <div class="flex items-center gap-3">
+            <button
+                id="backButton"
+                onclick="goBack()"
+                class="size-10 bg-slate-100 flex items-center justify-center rounded-xl text-slate-700 shadow-lg shadow-slate-500/20 hover:bg-slate-200 transition-colors"
+            >
+                <span class="material-symbols-outlined text-2xl">arrow_back</span>
+            </button>
+            <div class="size-10 bg-primary flex items-center justify-center rounded-xl text-white shadow-lg shadow-primary/30">
+                <span class="material-symbols-outlined text-2xl">water_drop</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <h2 class="text-xl font-extrabold tracking-tight" id="dairyName">Gopal Dairy Shop</h2>
+                <div class="relative">
+                    <button id="dairySelectorBtn" class="dairy-selector-btn flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">store</span>
+                        <span>Switch Dairy</span>
+                        <span class="material-symbols-outlined text-xs">expand_more</span>
+                    </button>
+                    <div id="dairyDropdown" class="dairy-dropdown absolute left-0 mt-1 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 hidden">
+                        <div class="p-2">
+                            <div class="px-3 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Dairy</div>
+                            <div id="dairyList" class="max-h-60 overflow-y-auto">
+                                <!-- Dairy options will be populated dynamically -->
+                            </div>
+                            <div class="border-t border-slate-200 dark:border-slate-700 mt-2 pt-2">
+                                <button id="addNewDairyBtn" class="w-full px-3 py-2 text-left text-primary font-bold flex items-center gap-1 text-sm">
+                                    <span class="material-symbols-outlined text-sm">add</span>
+                                    Add New Dairy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <!-- Dairy Switcher -->
+            <div class="relative">
+                <button id="dairySwitchBtn" class="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-[#d1d1c8] dark:border-zinc-700 px-3 py-2 rounded-sm shadow-sm hover:bg-gray-50 transition-colors">
+                    <span class="material-symbols-outlined text-primary" style="width: 20px; height: 20px;">store</span>
+                    <span class="text-sm font-bold text-text-main dark:text-white" id="currentDairyName">Gopal Dairy</span>
+                    <span class="material-symbols-outlined text-sm">expand_more</span>
+                </button>
+                <div id="dairyDropdown" class="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-800 border border-[#d1d1c8] dark:border-zinc-700 rounded-sm shadow-lg z-20 hidden">
+                    <div class="py-2" id="dairyList">
+                        <!-- Dairy list will be populated dynamically -->
+                    </div>
+                    <div class="px-4 py-2 border-t border-gray-200 dark:border-zinc-700">
+                        <button id="addNewDairyBtn" class="w-full text-left px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-zinc-700 rounded flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs">add</span>
+                            Add New Dairy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-600" style="width: 14px; height: 14px;">info</span>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">System Healthy</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-slate-700" id="userName">Ramesh Kumar</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Operator</p>
+                </div>
+                <div class="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center font-black text-slate-600 border shadow-inner" id="userInitial">R</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content - Single Work Screen -->
+    <main class="flex-1 overflow-y-auto p-8 flex items-center justify-center">
+        <div class="max-w-4xl w-full">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-black tracking-tight uppercase text-primary">Milk Collection Machine</h1>
+                <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Enter milk details below</p>
+            </div>
+
+            <!-- Farmer Selection -->
+            <div class="mb-8">
+                <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-40 shadow-tile">
+                    <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">person</span>
+                    </div>
+                    <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                        <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">1</span>
+                        <select
+                            id="farmerSelect"
+                            required
+                            class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                            onchange="focusNextField(this, 'fatInput'); updateFarmerDetails(this.value)"
+                        >
+                            <option value="">Select Farmer</option>
+                        </select>
+                    </label>
+                    <div class="flex px-6 items-center border-l border-border-subtle">
+                        <button
+                            type="button"
+                            class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                            onclick="focusNextField('farmerSelect', 'fatInput')"
+                        >
+                            <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Farmer Details -->
+                <div class="mt-4 flex items-center justify-center gap-4 p-4 bg-slate-50 rounded-xl">
+                    <div class="size-16 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden" id="farmerPhotoPreview">
+                        <span class="material-symbols-outlined text-2xl text-slate-400">person</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-bold text-lg" id="selectedFarmerName">No farmer selected</p>
+                        <p class="text-slate-500" id="selectedFarmerMobile">-</p>
+                        <div class="flex gap-4 mt-2">
+                            <div class="text-sm">
+                                <span class="text-slate-500">Mode:</span>
+                                <span id="paymentMode" class="font-bold">Fat based</span>
+                            </div>
+                            <div class="text-sm">
+                                <span class="text-slate-500">Balance:</span>
+                                <span id="farmerBalance" class="font-bold text-green-600">₹0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fat Input -->
+            <div class="mb-8">
+                <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-40 shadow-tile opacity-90 hover:opacity-100 focus-within:opacity-100 focus-within:ring-0">
+                    <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">bolt</span>
+                    </div>
+                    <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                        <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">2</span>
+                        <input
+                            id="fatInput"
+                            type="number"
+                            step="0.01"
+                            required
+                            class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                            placeholder="0.0"
+                            inputmode="decimal"
+                            oninput="updateCalculatedAmount(); focusNextFieldOnComplete(this, 'quantityInput', 2)"
+                            onkeypress="handleInputKeypress(event, 'quantityInput')"
+                        />
+                    </label>
+                    <div class="flex px-6 items-center border-l border-border-subtle">
+                        <button
+                            type="button"
+                            class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                            onclick="focusNextField('fatInput', 'quantityInput')"
+                        >
+                            <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quantity Input -->
+            <div class="mb-8">
+                <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-40 shadow-tile opacity-90 hover:opacity-100 focus-within:opacity-100 focus-within:ring-0">
+                    <div class="w-32 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-7xl text-primary/80 group-focus-within:text-primary transition-colors">format_list_numbered</span>
+                    </div>
+                    <label class="flex-1 flex flex-col justify-center px-8 py-4 cursor-text relative">
+                        <span class="absolute top-4 left-8 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">3</span>
+                        <input
+                            id="quantityInput"
+                            type="number"
+                            step="0.01"
+                            required
+                            class="w-full text-7xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                            placeholder="00.0"
+                            inputmode="decimal"
+                            oninput="updateCalculatedAmount(); focusNextFieldOnComplete(this, 'saveEntryBtn', 2)"
+                            onkeypress="handleInputKeypress(event, 'saveEntryBtn')"
+                        />
+                    </label>
+                    <div class="flex px-6 items-center border-l border-border-subtle">
+                        <button
+                            type="button"
+                            class="h-16 w-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                            onclick="focusNextField('quantityInput', 'saveEntryBtn')"
+                        >
+                            <span class="material-symbols-outlined text-4xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Fields for Flexibility -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <!-- Shift Selection -->
+                <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                    <div class="w-24 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-5xl text-primary/80 group-focus-within:text-primary transition-colors">schedule</span>
+                    </div>
+                    <label class="flex-1 flex flex-col justify-center px-6 py-4 cursor-text relative">
+                        <span class="absolute top-4 left-6 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">4</span>
+                        <select
+                            id="shiftSelect"
+                            class="w-full text-5xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                        >
+                            <option value="Morning">Morning</option>
+                            <option value="Evening">Evening</option>
+                        </select>
+                    </label>
+                    <div class="flex px-4 items-center border-l border-border-subtle">
+                        <button
+                            type="button"
+                            class="h-14 w-14 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                            onclick="focusNextField('shiftSelect', 'typeSelect')"
+                        >
+                            <span class="material-symbols-outlined text-3xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Milk Type Selection -->
+                <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                    <div class="w-24 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-5xl text-primary/80 group-focus-within:text-primary transition-colors">nature</span>
+                    </div>
+                    <label class="flex-1 flex flex-col justify-center px-6 py-4 cursor-text relative">
+                        <span class="absolute top-4 left-6 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">5</span>
+                        <select
+                            id="typeSelect"
+                            class="w-full text-5xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                        >
+                            <option value="Cow">Cow</option>
+                            <option value="Buffalo">Buffalo</option>
+                        </select>
+                    </label>
+                    <div class="flex px-4 items-center border-l border-border-subtle">
+                        <button
+                            type="button"
+                            class="h-14 w-14 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                            onclick="focusNextField('typeSelect', 'snfInput')"
+                        >
+                            <span class="material-symbols-outlined text-3xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SNF Input -->
+                <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                    <div class="w-24 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-5xl text-primary/80 group-focus-within:text-primary transition-colors">science</span>
+                    </div>
+                    <label class="flex-1 flex flex-col justify-center px-6 py-4 cursor-text relative">
+                        <span class="absolute top-4 left-6 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">6</span>
+                        <input
+                            id="snfInput"
+                            type="number"
+                            step="0.01"
+                            class="w-full text-5xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                            placeholder="0.0"
+                            inputmode="decimal"
+                            oninput="updateCalculatedAmount(); focusNextFieldOnComplete(this, 'rateInput', 2)"
+                            onkeypress="handleInputKeypress(event, 'rateInput')"
+                        />
+                    </label>
+                    <div class="flex px-4 items-center border-l border-border-subtle">
+                        <button
+                            type="button"
+                            class="h-14 w-14 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                            onclick="focusNextField('snfInput', 'rateInput')"
+                        >
+                            <span class="material-symbols-outlined text-3xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manual Rate Override -->
+                <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                    <div class="w-24 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-5xl text-primary/80 group-focus-within:text-primary transition-colors">toll</span>
+                    </div>
+                    <label class="flex-1 flex flex-col justify-center px-6 py-4 cursor-text relative">
+                        <span class="absolute top-4 left-6 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">7</span>
+                        <input
+                            id="rateInput"
+                            type="number"
+                            step="0.01"
+                            class="w-full text-5xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                            placeholder="0.00"
+                            inputmode="decimal"
+                            oninput="updateCalculatedAmount(); focusNextFieldOnComplete(this, 'notesInput', 2)"
+                            onkeypress="handleInputKeypress(event, 'notesInput')"
+                        />
+                    </label>
+                    <div class="flex px-4 items-center border-l border-border-subtle">
+                        <button
+                            type="button"
+                            class="h-14 w-14 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                            onclick="focusNextField('rateInput', 'notesInput')"
+                        >
+                            <span class="material-symbols-outlined text-3xl text-slate-400 group-focus-within:text-white">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Field -->
+            <div class="mb-8">
+                <div class="input-tile group relative flex flex-row items-stretch bg-surface-white border border-border-subtle rounded-2xl h-32 shadow-tile">
+                    <div class="w-24 bg-slate-50 rounded-l-2xl flex items-center justify-center border-r border-border-subtle group-focus-within:bg-primary/10 group-focus-within:border-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-5xl text-primary/80 group-focus-within:text-primary transition-colors">edit_note</span>
+                    </div>
+                    <label class="flex-1 flex flex-col justify-center px-6 py-4 cursor-text relative">
+                        <span class="absolute top-4 left-6 text-xs font-bold text-text-secondary uppercase tracking-widest opacity-50">8</span>
+                        <input
+                            id="notesInput"
+                            type="text"
+                            class="w-full text-5xl font-bold text-text-main placeholder-slate-200 border-none focus:ring-0 p-0 bg-transparent leading-tight tracking-tight mt-2"
+                            placeholder="Any notes..."
+                            onkeypress="handleInputKeypress(event, 'saveEntryBtn')"
+                        />
+                    </label>
+                    <div class="flex px-4 items-center border-l border-border-subtle">
+                        <button
+                            type="button"
+                            class="h-14 w-14 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-focus-within:bg-primary group-focus-within:border-primary group-focus-within:shadow-lg transition-all hover:bg-slate-200"
+                            onclick="focusNextField('notesInput', 'saveEntryBtn')"
+                        >
+                            <span class="material-symbols-outlined text-3xl text-slate-400 group-focus-within:text-white">done</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculation Trail Display -->
+            <div class="mb-8">
+                <div class="bg-slate-100 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-2xl p-6">
+                    <div class="text-sm font-bold uppercase tracking-widest text-slate-800 dark:text-slate-200 mb-2">Calculation Trail</div>
+                    <div class="text-4xl font-bold text-slate-700 dark:text-slate-100" id="calculationTrailDisplay">
+                        0.0 L × 0.0% → ₹0.00/L = ₹0.00
+                    </div>
+                    <div class="mt-2 text-sm text-slate-600 dark:text-slate-300" id="rateExplanation">
+                        Rate: Base + Fat adjustment
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculated Amount Display -->
+            <div class="mb-8">
+                <div class="bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-2xl p-6 text-center">
+                    <div class="text-sm font-bold uppercase tracking-widest text-green-800 dark:text-green-200">Calculated Amount</div>
+                    <div class="text-6xl font-bold text-green-700 dark:text-green-100 mt-2" id="calculatedAmountDisplay">0.00</div>
+                </div>
+            </div>
+
+            <!-- Undo, Hold, and Save Buttons -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                    id="undoLastEntryBtn"
+                    onclick="undoLastEntry()"
+                    class="py-6 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-3xl p-6 shadow-lg shadow-amber-600/20 transition-all transform hover:-translate-y-1 flex items-center justify-between group h-32"
+                >
+                    <div class="flex flex-col items-start">
+                        <span class="bg-amber-500/30 rounded-lg px-3 py-1 text-sm font-bold uppercase tracking-wider mb-2">UNDO</span>
+                        <span class="text-3xl font-bold uppercase tracking-wide">Last Entry</span>
+                    </div>
+                    <div class="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                        <span class="material-symbols-outlined text-5xl">undo</span>
+                    </div>
+                </button>
+
+                <button
+                    id="holdEntryBtn"
+                    onclick="holdCurrentEntry()"
+                    class="py-6 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white rounded-3xl p-6 shadow-lg shadow-slate-600/20 transition-all transform hover:-translate-y-1 flex items-center justify-between group h-32"
+                >
+                    <div class="flex flex-col items-start">
+                        <span class="bg-slate-500/30 rounded-lg px-3 py-1 text-sm font-bold uppercase tracking-wider mb-2">HOLD</span>
+                        <span class="text-3xl font-bold uppercase tracking-wide">Entry</span>
+                    </div>
+                    <div class="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                        <span class="material-symbols-outlined text-5xl">pause_circle</span>
+                    </div>
+                </button>
+
+                <button
+                    id="saveEntryBtn"
+                    onclick="saveMilkEntry()"
+                    class="py-6 bg-primary hover:bg-primary/90 active:bg-primary/80 text-white rounded-3xl p-6 shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-1 flex items-center justify-between group h-32"
+                >
+                    <div class="flex flex-col items-start">
+                        <span class="bg-primary/30 rounded-lg px-3 py-1 text-sm font-bold uppercase tracking-wider mb-2">SAVE</span>
+                        <span class="text-3xl font-bold uppercase tracking-wide">Entry</span>
+                    </div>
+                    <div class="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                        <span class="material-symbols-outlined text-5xl">save</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Quick Action Strip -->
+    <div class="quick-action-strip">
+        <div class="quick-action-icon locked-feature" onclick="location.href='passbook.html'">
+            <span class="material-symbols-outlined text-2xl">book_2</span>
+            <span class="text-xs mt-1">Passbook</span>
+        </div>
+        <div class="quick-action-icon locked-feature" onclick="location.href='payments.html'">
+            <span class="material-symbols-outlined text-2xl">payments</span>
+            <span class="text-xs mt-1">Pay</span>
+        </div>
+        <div class="quick-action-icon locked-feature" onclick="location.href='inventory.html'">
+            <span class="material-symbols-outlined text-2xl">inventory_2</span>
+            <span class="text-xs mt-1">Stock</span>
+        </div>
+        <div class="quick-action-icon locked-feature" onclick="location.href='settings.html'">
+            <span class="material-symbols-outlined text-2xl">settings</span>
+            <span class="text-xs mt-1">Settings</span>
+        </div>
+    </div>
+
+    <script src="dairy-manager.js"></script>
+    <script src="cycle-manager.js"></script>
+    <script src="translations.js"></script>
+    <script src="state.js"></script>
+    <script src="db.js"></script>
+    <script src="dairy-manager.js"></script>
+    <script src="utils.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Check authentication
+        const session = sessionStorage.getItem('milkbook_session');
+        if (!session) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Load state from localStorage
+        const STORAGE_KEY = 'milkbook_data';
+        const INITIAL_STATE = {
+            auth: {
+                isAuthenticated: true,
+                user: { name: 'Ramesh Kumar', mobile: '9876543210', role: 'owner' },
+                role: 'owner'
+            },
+            currentScreen: 'main-work',
+            dairyInfo: {
+                name: 'Gopal Dairy Shop',
+                owner: 'Ramesh Kumar',
+                mobile: '9876543210',
+                address: '',
+                rateType: 'Fat_SNF',
+                language: 'EN'
+            },
+            farmers: [],
+            milkEntries: [],
+            rates: {
+                cow: { base: 40, fatRef: 3.5, snfRef: 8.5 },
+                buffalo: { base: 60, fatRef: 6.0, snfRef: 9.0 }
+            },
+            payments: [],
+            sales: [],
+            inventory: [],
+            evidenceRecords: [],
+            settings: {
+                backupEnabled: true,
+                lastBackup: null,
+                printerName: 'Default',
+                syncState: 'QUARANTINED',
+                lastServerSync: null,
+                pendingRecords: 0,
+                lastSyncTime: null,
+                localRecordsToday: 0
+            }
+        };
+
+        let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || JSON.stringify(INITIAL_STATE));
+
+        // Ensure state structure is correct
+        if (!state.farmers) state.farmers = [];
+        if (!state.milkEntries) state.milkEntries = [];
+        if (!state.payments) state.payments = [];
+        if (!state.sales) state.sales = [];
+        if (!state.inventory) state.inventory = [];
+        if (!state.evidenceRecords) state.evidenceRecords = [];
+        if (!state.settings) state.settings = INITIAL_STATE.settings;
+
+        // Update header info
+        document.getElementById('dairyName').textContent = state.dairyInfo?.name || 'Milk Collection Center';
+        document.getElementById('userName').textContent = state.auth?.user?.name || 'User';
+        document.getElementById('userInitial').textContent = (state.auth?.user?.name || 'U').charAt(0).toUpperCase();
+
+        // Populate farmer dropdown
+        const farmerSelect = document.getElementById('farmerSelect');
+        farmerSelect.innerHTML = '<option value="">Select Farmer</option>';
+        state.farmers.forEach(farmer => {
+            if (farmer.active !== false) {
+                const option = document.createElement('option');
+                option.value = farmer.id;
+                option.textContent = farmer.name;
+                farmerSelect.appendChild(option);
+            }
+        });
+
+        // Function to focus next field
+        function focusNextField(currentFieldId, nextFieldId) {
+            const currentField = typeof currentFieldId === 'string' ? document.getElementById(currentFieldId) : currentFieldId;
+            const nextField = document.getElementById(nextFieldId);
+
+            if (nextField) {
+                nextField.focus();
+                nextField.select && nextField.select();
+            }
+        }
+
+        // Function to focus next field when input is complete
+        function focusNextFieldOnComplete(inputElement, nextElementId, minLength) {
+            if (inputElement.value.length >= minLength) {
+                setTimeout(() => {
+                    focusNextField(inputElement, nextElementId);
+                }, 300);
+            }
+        }
+
+        // Handle keypress in input fields
+        function handleInputKeypress(event, nextElementId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const nextElement = document.getElementById(nextElementId);
+                if (nextElement) {
+                    nextElement.focus();
+                    if (nextElement.select) nextElement.select();
+                }
+            }
+        }
+
+        // Function to update calculated amount when inputs change
+        function updateCalculatedAmount() {
+            const fat = parseFloat(document.getElementById('fatInput').value) || 0;
+            const quantity = parseFloat(document.getElementById('quantityInput').value) || 0;
+
+            if (quantity > 0 && fat > 0) {
+                const farmerId = document.getElementById('farmerSelect').value;
+                const farmer = state.farmers.find(f => f.id === farmerId);
+                const type = farmer?.type || 'Cow';
+
+                const calc = calculateMilkAmount(
+                    quantity,
+                    fat,
+                    0, // SNF not used in this simplified interface
+                    state.dairyInfo.rateType,
+                    state.rates,
+                    type
+                );
+
+                document.getElementById('calculatedAmountDisplay').textContent = calc.amount;
+
+                // Update calculation trail display
+                const rate = calc.rate;
+                document.getElementById('calculationTrailDisplay').textContent =
+                    `${quantity.toFixed(1)} L × ${fat.toFixed(1)}% → ₹${rate}/L = ₹${calc.amount}`;
+
+                // Update rate explanation
+                const baseRate = type === 'Cow' ? state.rates.cow.base : state.rates.buffalo.base;
+                const fatRef = type === 'Cow' ? state.rates.cow.fatRef : state.rates.buffalo.fatRef;
+                const fatDiff = fat - fatRef;
+                const rateDiff = (fatDiff * 2); // Assuming 2 rupees per fat point difference
+
+                document.getElementById('rateExplanation').textContent =
+                    `Rate: ₹${baseRate} + (${fatDiff.toFixed(1)} × ₹2) = ₹${rate}`;
+            } else {
+                document.getElementById('calculatedAmountDisplay').textContent = '0.00';
+                document.getElementById('calculationTrailDisplay').textContent = '0.0 L × 0.0% → ₹0.00/L = ₹0.00';
+                document.getElementById('rateExplanation').textContent = 'Rate: Base + Fat adjustment';
+            }
+        }
+
+        // Update farmer details when farmer is selected
+        function updateFarmerDetails(farmerId) {
+            if (!farmerId) {
+                document.getElementById('selectedFarmerName').textContent = 'No farmer selected';
+                document.getElementById('selectedFarmerMobile').textContent = '-';
+                document.getElementById('paymentMode').textContent = 'Fat based';
+                document.getElementById('farmerBalance').textContent = '₹0.00';
+                return;
+            }
+
+            const farmer = state.farmers.find(f => f.id === farmerId);
+            if (farmer) {
+                document.getElementById('selectedFarmerName').textContent = farmer.name || 'Unknown Farmer';
+                document.getElementById('selectedFarmerMobile').textContent = farmer.mobile || '-';
+
+                // Update payment mode
+                const paymentMode = farmer.paymentMode || 'Fat based';
+                document.getElementById('paymentMode').textContent = paymentMode;
+
+                // Calculate farmer balance
+                const balance = calculateFarmerBalance(farmerId, state.milkEntries, state.payments);
+                document.getElementById('farmerBalance').textContent = `₹${balance.balance.toFixed(2)}`;
+
+                // Update the farmer photo preview if available
+                const photoPreview = document.getElementById('farmerPhotoPreview');
+                if (farmer.photo) {
+                    photoPreview.innerHTML = `<img src="${farmer.photo}" alt="${farmer.name}" class="w-full h-full object-cover">`;
+                } else {
+                    photoPreview.innerHTML = `<span class="material-symbols-outlined text-2xl text-slate-400">person</span>`;
+                }
+            }
+        }
+
+        // Play success sound after save
+        function playSuccessSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = 'square';
+                oscillator.frequency.value = 800;
+                gainNode.gain.value = 0.3;
+                
+                oscillator.start();
+                setTimeout(() => {
+                    oscillator.stop();
+                }, 200);
+            } catch (e) {
+                console.log("Could not play sound:", e);
+            }
+        }
+
+        // Flash success indicator
+        function flashSuccessIndicator() {
+            const saveButton = document.getElementById('saveEntryBtn');
+            saveButton.classList.add('success-flash');
+            
+            setTimeout(() => {
+                saveButton.classList.remove('success-flash');
+            }, 1000);
+        }
+
+        // Enhanced saveMilkEntry function with success feedback
+        async function saveMilkEntry() {
+            const farmerId = document.getElementById('farmerSelect').value;
+            const fat = parseFloat(document.getElementById('fatInput').value) || 0;
+            const quantity = parseFloat(document.getElementById('quantityInput').value) || 0;
+
+            if (!farmerId) {
+                alert('Please select a farmer');
+                return;
+            }
+
+            if (quantity <= 0) {
+                alert('Please enter a valid quantity');
+                return;
+            }
+
+            if (fat <= 0) {
+                alert('Please enter a valid fat percentage');
+                return;
+            }
+
+            // Get farmer details
+            const farmer = state.farmers.find(f => f.id === farmerId);
+            if (!farmer) {
+                alert('Farmer not found');
+                return;
+            }
+
+            // Calculate amount based on fat and quantity
+            const type = farmer?.type || 'Cow';
+            const calc = calculateMilkAmount(quantity, fat, 0, state.dairyInfo.rateType, state.rates, type);
+
+            // Create milk entry object
+            const milkEntry = {
+                id: Date.now().toString(),
+                farmerId,
+                date: new Date().toISOString().split('T')[0], // Today's date
+                shift: new Date().getHours() < 12 ? 'Morning' : 'Evening', // Auto-detect shift
+                type: type,
+                qty: quantity,
+                fat: fat,
+                snf: 0, // SNF not entered in this simplified interface
+                rate: parseFloat(calc.rate),
+                amount: parseFloat(calc.amount),
+                syncState: 'QUARANTINED',
+                createdAtLocal: new Date().toISOString(),
+                syncedAtServer: null,
+                isManual: true,
+                inputSource: 'machine_interface',
+                deviceId: navigator.userAgent,
+                operatorId: state.auth?.user?.id || 'current_user',
+                // Add correction window info
+                correctionAllowedUntil: new Date(Date.now() + 5 * 60000).toISOString(), // 5 minutes from now
+                entryType: 'normal' // normal or correction
+            };
+
+            try {
+                // Save to IndexedDB
+                await addData('milk_collections', milkEntry);
+
+                // Update state
+                state.milkEntries.push(milkEntry);
+                state.settings.pendingRecords = (state.settings.pendingRecords || 0) + 1;
+
+                // Save state back to localStorage
+                localStorage.setItem('milkbook_data', JSON.stringify(state));
+
+                // Show success feedback
+                playSuccessSound();
+                flashSuccessIndicator();
+
+                // Generate and send WhatsApp receipt
+                generateAndSendWhatsAppReceipt(milkEntry, farmer, state.dairyInfo);
+
+                // Store last farmer ID for auto-advance
+                localStorage.setItem('lastSavedFarmerId', farmerId);
+
+                // Clear form and focus on farmer selection for next entry
+                document.getElementById('fatInput').value = '';
+                document.getElementById('quantityInput').value = '';
+                document.getElementById('calculatedAmountDisplay').textContent = '0.00';
+
+                // Focus back to farmer selection to prepare for next entry
+                document.getElementById('farmerSelect').focus();
+
+                // Auto-select the same farmer if it was previously selected
+                const lastFarmerId = localStorage.getItem('lastSavedFarmerId');
+                if (lastFarmerId) {
+                    document.getElementById('farmerSelect').value = lastFarmerId;
+                    updateFarmerDetails(lastFarmerId);
+                }
+
+            } catch (error) {
+                console.error('Error saving milk entry:', error);
+                alert('Error saving milk entry: ' + error.message);
+            }
+        }
+
+        // Function to create correction entry
+        function createCorrectionEntry(originalEntryId, reason, amountAdjustment) {
+            const originalEntry = state.milkEntries.find(entry => entry.id === originalEntryId);
+            if (!originalEntry) {
+                alert('Original entry not found');
+                return;
+            }
+
+            // Create correction entry
+            const correctionEntry = {
+                id: Date.now().toString() + '_correction',
+                originalEntryId: originalEntryId,
+                farmerId: originalEntry.farmerId,
+                date: new Date().toISOString().split('T')[0],
+                shift: originalEntry.shift,
+                type: originalEntry.type,
+                qty: -Math.abs(originalEntry.qty), // Negative quantity
+                fat: originalEntry.fat,
+                snf: originalEntry.snf,
+                rate: originalEntry.rate,
+                amount: -Math.abs(parseFloat(originalEntry.amount)), // Negative amount
+                reason: reason,
+                syncState: 'QUARANTINED',
+                createdAtLocal: new Date().toISOString(),
+                syncedAtServer: null,
+                isManual: true,
+                inputSource: 'correction',
+                deviceId: navigator.userAgent,
+                operatorId: state.auth?.user?.id || 'current_user',
+                entryType: 'correction'
+            };
+
+            // Add to state
+            state.milkEntries.push(correctionEntry);
+            state.settings.pendingRecords = (state.settings.pendingRecords || 0) + 1;
+
+            // Save to localStorage
+            localStorage.setItem('milkbook_data', JSON.stringify(state));
+
+            alert('Correction entry added successfully!');
+        }
+
+        // Function to show correction modal with PIN
+        function showCorrectionModal(entryId) {
+            // In a real implementation, you would have proper authentication
+            // For demo purposes, we'll use a simple PIN
+            const pin = prompt('Enter admin PIN to authorize correction:');
+            if (pin === '1234') { // Simple demo PIN
+                const reason = prompt('Enter correction reason:');
+                if (reason && reason.trim() !== '') {
+                    createCorrectionEntry(entryId, reason, 0);
+                }
+            } else {
+                alert('Invalid PIN. Correction not authorized.');
+            }
+        }
+
+        // Function to undo last entry
+        function undoLastEntry() {
+            if (state.milkEntries && state.milkEntries.length > 0) {
+                // Get the last entry
+                const lastEntry = state.milkEntries[state.milkEntries.length - 1];
+
+                // Confirm with user
+                const confirmed = confirm(`Last entry:\nFarmer: ${getFarmerName(lastEntry.farmerId)}\nQuantity: ${lastEntry.qty}L\nAmount: ₹${lastEntry.amount}\n\nUndo this entry?`);
+
+                if (confirmed) {
+                    // Create a correction entry to reverse the last entry
+                    const correctionEntry = {
+                        id: Date.now().toString() + '_correction',
+                        originalEntryId: lastEntry.id,
+                        farmerId: lastEntry.farmerId,
+                        date: new Date().toISOString().split('T')[0],
+                        shift: lastEntry.shift,
+                        type: lastEntry.type,
+                        qty: -Math.abs(lastEntry.qty), // Negative quantity
+                        fat: lastEntry.fat,
+                        snf: lastEntry.snf,
+                        rate: lastEntry.rate,
+                        amount: -Math.abs(parseFloat(lastEntry.amount)), // Negative amount
+                        reason: 'Undo last entry',
+                        syncState: 'QUARANTINED',
+                        createdAtLocal: new Date().toISOString(),
+                        syncedAtServer: null,
+                        isManual: true,
+                        inputSource: 'undo',
+                        deviceId: navigator.userAgent,
+                        operatorId: state.auth?.user?.id || 'current_user',
+                        entryType: 'correction'
+                    };
+
+                    // Add to state
+                    state.milkEntries.push(correctionEntry);
+                    state.settings.pendingRecords = (state.settings.pendingRecords || 0) + 1;
+
+                    // Save to localStorage
+                    localStorage.setItem('milkbook_data', JSON.stringify(state));
+
+                    alert('Last entry undone successfully!');
+
+                    // Play undo sound
+                    playUndoSound();
+                }
+            } else {
+                alert('No entries to undo');
+            }
+        }
+
+        // Function to play undo sound
+        function playUndoSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 523.25; // C5 note
+                gainNode.gain.value = 0.3;
+
+                oscillator.start();
+                setTimeout(() => {
+                    oscillator.stop();
+                }, 150);
+            } catch (e) {
+                console.log("Could not play sound:", e);
+            }
+        }
+
+        // Function to get farmer name by ID
+        function getFarmerName(farmerId) {
+            const farmer = state.farmers.find(f => f.id === farmerId);
+            return farmer ? farmer.name : 'Unknown Farmer';
+        }
+
+        // Function to go back to previous page
+        function goBack() {
+            // For now, go back to dashboard
+            // In a real implementation, this would navigate to the previous page in the user's flow
+            window.history.back();
+        }
+
+        // Function to hold current entry (save as draft)
+        function holdCurrentEntry() {
+            // Get current form values
+            const formData = {
+                farmerId: document.getElementById('farmerSelect').value,
+                date: document.getElementById('dateInput').value,
+                shift: document.getElementById('shiftSelect').value,
+                type: document.getElementById('typeSelect').value,
+                qty: parseFloat(document.getElementById('quantityInput').value) || 0,
+                fat: parseFloat(document.getElementById('fatInput').value) || 0,
+                snf: parseFloat(document.getElementById('snfInput').value) || 0,
+                rate: parseFloat(document.getElementById('rateInput').value) || 0,
+                amount: parseFloat(document.getElementById('amountInput').value) || 0,
+                heldAt: new Date().toISOString()
+            };
+
+            // Save to localStorage as draft
+            localStorage.setItem('milkbook_draft_entry', JSON.stringify(formData));
+            alert('Entry saved as draft. You can resume later.');
+        }
+
+        // Function to resume held entry
+        function resumeHeldEntry() {
+            const draftData = localStorage.getItem('milkbook_draft_entry');
+            if (draftData) {
+                try {
+                    const formData = JSON.parse(draftData);
+
+                    // Populate form with draft data
+                    document.getElementById('farmerSelect').value = formData.farmerId;
+                    document.getElementById('dateInput').value = formData.date;
+                    document.getElementById('shiftSelect').value = formData.shift;
+                    document.getElementById('typeSelect').value = formData.type;
+                    document.getElementById('quantityInput').value = formData.qty;
+                    document.getElementById('fatInput').value = formData.fat;
+                    document.getElementById('snfInput').value = formData.snf;
+                    document.getElementById('rateInput').value = formData.rate;
+                    document.getElementById('amountInput').value = formData.amount;
+
+                    // Update farmer details
+                    updateFarmerDetails(formData.farmerId);
+
+                    // Clear draft
+                    localStorage.removeItem('milkbook_draft_entry');
+
+                    alert('Draft entry resumed.');
+                } catch (e) {
+                    console.error('Error resuming draft:', e);
+                    alert('Error resuming draft entry.');
+                }
+            } else {
+                alert('No draft entry found.');
+            }
+        }
+
+        // Generate and send WhatsApp receipt
+        function generateAndSendWhatsAppReceipt(milkEntry, farmer, dairyInfo) {
+            const date = new Date(milkEntry.date).toLocaleDateString('en-IN');
+            const time = new Date(milkEntry.createdAtLocal).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            
+            let message = `*${dairyInfo.name}*\n`;
+            message += `Date: ${date}\n`;
+            message += `Time: ${time}\n\n`;
+            message += `Farmer: ${farmer?.name || 'Unknown'}\n`;
+            message += `Mobile: ${farmer?.mobile || 'N/A'}\n\n`;
+            message += `Milk Details:\n`;
+            message += `- Quantity: ${milkEntry.qty} L\n`;
+            message += `- Type: ${milkEntry.type}\n`;
+            message += `- Fat: ${milkEntry.fat}%\n`;
+            message += `- SNF: ${milkEntry.snf}%\n`;
+            message += `- Rate: ₹${milkEntry.rate}/L\n`;
+            message += `- Amount: ₹${milkEntry.amount}\n\n`;
+            message += `Thank you for your business!`;
+
+            // Check if farmer has a mobile number
+            if (farmer?.mobile) {
+                // Check if online
+                if (navigator.onLine) {
+                    // Send WhatsApp message directly
+                    const cleanPhone = farmer.mobile.replace(/\D/g, '');
+                    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappUrl, '_blank');
+                } else {
+                    // Queue the message for later when online
+                    queueWhatsAppMessage(farmer.mobile, message);
+                }
+            }
+        }
+
+        // Queue WhatsApp message for later sending when online
+        function queueWhatsAppMessage(phoneNumber, message) {
+            const queue = JSON.parse(localStorage.getItem('whatsapp_queue') || '[]');
+            queue.push({
+                id: Date.now().toString(),
+                phoneNumber,
+                message,
+                timestamp: new Date().toISOString(),
+                status: 'queued'
+            });
+            localStorage.setItem('whatsapp_queue', JSON.stringify(queue));
+        }
+
+        // Check if we're in rush hour and apply appropriate behavior
+        function checkRushHour() {
+            const hour = new Date().getHours();
+            const isRush = (hour >= 5 && hour <= 10) || (hour >= 17 && hour <= 20); // Morning 5-10AM, Evening 5-8PM
+            
+            const body = document.body;
+            if (isRush) {
+                body.classList.add('rush-hour');
+            } else {
+                body.classList.remove('rush-hour');
+            }
+        }
+
+        // Check rush hour periodically
+        setInterval(checkRushHour, 60000); // Every minute
+        checkRushHour(); // Initial check
+
+        // Initialize dairy switcher
+        function initDairySwitcher() {
+            const dairySwitchBtn = document.getElementById('dairySwitchBtn');
+            const dairyDropdown = document.getElementById('dairyDropdown');
+            const dairyList = document.getElementById('dairyList');
+            const currentDairyName = document.getElementById('currentDairyName');
+            const addNewDairyBtn = document.getElementById('addNewDairyBtn');
+
+            if (dairySwitchBtn && dairyDropdown) {
+                // Load and display dairies
+                function loadDairies() {
+                    const allDairies = getAllDairies();
+                    const currentDairyId = getCurrentDairyId();
+
+                    dairyList.innerHTML = '';
+
+                    Object.values(allDairies).forEach(dairy => {
+                        const dairyItem = document.createElement('div');
+                        dairyItem.className = `px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center justify-between ${dairy.id === currentDairyId ? 'bg-blue-50 dark:bg-blue-900/20 font-bold' : ''}`;
+                        dairyItem.innerHTML = `
+                            <div>
+                                <div>${dairy.name}</div>
+                                <div class="text-xs text-gray-500">${dairy.owner}</div>
+                            </div>
+                            ${dairy.id === currentDairyId ? '<span class="material-symbols-outlined text-blue-500 text-sm">check</span>' : ''}
+                        `;
+                        dairyItem.addEventListener('click', () => {
+                            switchToDairy(dairy.id);
+                            currentDairyName.textContent = dairy.name;
+                            dairyDropdown.classList.add('hidden');
+                        });
+                        dairyList.appendChild(dairyItem);
+                    });
+                }
+
+                // Load dairies initially
+                loadDairies();
+
+                // Update current dairy name
+                const currentDairy = getCurrentDairyConfig();
+                if (currentDairy) {
+                    currentDairyName.textContent = currentDairy.name;
+                }
+
+                // Toggle dairy dropdown
+                dairySwitchBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dairyDropdown.classList.toggle('hidden');
+                });
+
+                // Add new dairy functionality
+                if (addNewDairyBtn) {
+                    addNewDairyBtn.addEventListener('click', function() {
+                        // In a real app, this would open a form to add a new dairy
+                        alert('Add new dairy functionality would open here');
+                        dairyDropdown.classList.add('hidden');
+                    });
+                }
+
+                // Close dropdown when clicking elsewhere
+                document.addEventListener('click', function() {
+                    dairyDropdown.classList.add('hidden');
+                });
+            }
+        }
+
+        // Initialize dairy switcher when page loads
+        document.addEventListener('DOMContentLoaded', initDairySwitcher);
+        
+        // Update all farmer dropdowns function
+        function updateFarmerDropdowns(newState) {
+            // Update dropdowns on current page if they exist
+            const farmerDropdowns = document.querySelectorAll('select[id*="farmer"], select[id*="Farmer"], select[name*="farmer"], select[name*="Farmer"]');
+
+            farmerDropdowns.forEach(dropdown => {
+                // Save current selection if possible
+                const currentSelection = dropdown.value;
+
+                // Clear existing options except the first placeholder
+                dropdown.innerHTML = '<option value="">Select Farmer</option>';
+
+                // Add all active farmers
+                (newState?.farmers || []).filter(f => f.active !== false).forEach(farmer => {
+                    const option = document.createElement('option');
+                    option.value = farmer.id;
+                    option.textContent = farmer.name;
+                    dropdown.appendChild(option);
+                });
+
+                // Restore previous selection if it still exists
+                if (currentSelection) {
+                    dropdown.value = currentSelection;
+                }
+            });
+
+            // Also update farmer dropdowns in other open tabs/windows using storage event
+            localStorage.setItem('milkbook_data', JSON.stringify(newState));
+        }
+        
+        // Initial updates
+        updateFarmerDropdowns(state);
+
+        // Update farmer details display
+        function updateFarmerDetails(farmerId) {
+            if (!farmerId) {
+                document.getElementById('selectedFarmerName').textContent = 'No farmer selected';
+                document.getElementById('selectedFarmerMobile').textContent = '-';
+                return;
+            }
+
+            const farmer = state.farmers.find(f => f.id === farmerId);
+            if (farmer) {
+                document.getElementById('selectedFarmerName').textContent = farmer.name || 'Unknown Farmer';
+                document.getElementById('selectedFarmerMobile').textContent = farmer.mobile || '-';
+
+                // Update the farmer photo preview if available
+                const photoPreview = document.getElementById('farmerPhotoPreview');
+                if (farmer.photo) {
+                    photoPreview.innerHTML = `<img src="${farmer.photo}" alt="${farmer.name}" class="w-full h-full object-cover">`;
+                } else {
+                    photoPreview.innerHTML = `<span class="material-symbols-outlined text-2xl text-slate-400">person</span>`;
+                }
+            }
+        }
+
+        // Quick select farmer by token
+        function quickSelectFarmerByToken(token) {
+            if (token.length >= 3) { // Minimum length to prevent too many matches
+                const matchingFarmer = state.farmers.find(farmer =>
+                    farmer.token && farmer.token.toString() === token
+                );
+
+                if (matchingFarmer) {
+                    document.getElementById('farmerSelect').value = matchingFarmer.id;
+                    updateFarmerDetails(matchingFarmer.id);
+
+                    // Auto-advance to next field after a short delay
+                    setTimeout(() => {
+                        focusNextField('farmerTokenInput', 'dateInput');
+                    }, 500);
+                }
+            }
+        }
+
+        // Handle keypress in token input
+        function handleTokenKeyPress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const token = document.getElementById('farmerTokenInput').value;
+                if (token) {
+                    quickSelectFarmerByToken(token);
+                }
+            }
+        }
+
+        // Auto-advance to next farmer after saving entry
+        function enableAutoAdvance() {
+            // Store the ID of the last saved farmer
+            const lastFarmerId = localStorage.getItem('lastSavedFarmerId');
+            if (lastFarmerId) {
+                // Pre-select the last farmer
+                document.getElementById('farmerSelect').value = lastFarmerId;
+                updateFarmerDetails(lastFarmerId);
+            }
+        }
+
+        // Enable auto-advance when page loads
+        window.addEventListener('load', enableAutoAdvance);
+
+        // Dairy selector functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const dairySelectorBtn = document.getElementById('dairySelectorBtn');
+            const dairyDropdown = document.getElementById('dairyDropdown');
+            const dairyList = document.getElementById('dairyList');
+            const addNewDairyBtn = document.getElementById('addNewDairyBtn');
+
+            // Populate dairy list
+            function populateDairyList() {
+                const allDairies = getAllDairies();
+                const currentDairyId = getCurrentDairyId();
+
+                dairyList.innerHTML = '';
+
+                Object.values(allDairies).forEach(dairy => {
+                    const div = document.createElement('div');
+                    div.className = `px-3 py-2 text-sm font-bold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 rounded flex items-center justify-between ${dairy.id === currentDairyId ? 'bg-primary/10 text-primary' : ''}`;
+                    div.innerHTML = `
+                        <span>${dairy.name}</span>
+                        ${dairy.id === currentDairyId ? '<span class="material-symbols-outlined text-xs text-primary">check</span>' : ''}
+                    `;
+                    div.addEventListener('click', function() {
+                        if (dairy.id !== currentDairyId) {
+                            switchToDairy(dairy.id);
+                            updateDairyUI(dairy.id, dairy);
+                        }
+                        dairyDropdown.classList.add('hidden');
+                    });
+                    dairyList.appendChild(div);
+                });
+            }
+
+            // Toggle dairy dropdown
+            dairySelectorBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dairyDropdown.classList.toggle('hidden');
+
+                // Populate the list each time it's opened to ensure it's up to date
+                populateDairyList();
+            });
+
+            // Add new dairy button
+            addNewDairyBtn.addEventListener('click', function() {
+                const dairyName = prompt('Enter dairy name:');
+                if (dairyName) {
+                    const newDairyId = addNewDairy({
+                        name: dairyName,
+                        owner: state.auth?.user?.name || 'Owner',
+                        mobile: state.auth?.user?.mobile || '',
+                        address: '',
+                        rateType: 'Fat_SNF',
+                        language: 'EN'
+                    });
+
+                    // Switch to the new dairy
+                    switchToDairy(newDairyId);
+                    updateDairyUI(newDairyId, getAllDairies()[newDairyId]);
+
+                    // Close dropdown
+                    dairyDropdown.classList.add('hidden');
+                }
+            });
+
+            // Close dropdown when clicking elsewhere
+            document.addEventListener('click', function(e) {
+                if (!dairySelectorBtn.contains(e.target) && !dairyDropdown.contains(e.target)) {
+                    dairyDropdown.classList.add('hidden');
+                }
+            });
+
+            // Initialize dairy selector
+            populateDairyList();
+        });
+    </script>
+</body>
+</html>
